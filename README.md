@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Car Comparison Dashboard
 
-## Getting Started
+A Next.js app for browsing cars and comparing up to three of them side by side. The catalog includes price, brand, model, weight, rating, and specifications. Filters, sorting, and the selected cars are stored in the URL.
 
-First, run the development server:
+## Requirements
+
+- Node.js 24.22.0 (see `.nvmrc`)
+- pnpm 12
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+nvm use
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev          # local development
+pnpm lint         # ESLint
+pnpm typecheck    # TypeScript
+pnpm test         # Vitest once, with coverage
+pnpm format       # write Prettier formatting
+pnpm format:check # check Prettier formatting
+pnpm build        # production build
+pnpm start        # serve the production build
+```
 
-## Learn More
+## Routes
 
-To learn more about Next.js, take a look at the following resources:
+| URL                                | Page                                                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `/`                                | Catalog. Filter by brand, type, and price, then sort and paginate.                                               |
+| `/compare?ids=toyota-camry,bmw-i4` | Side-by-side comparison. One car still renders. Two cars are required before the catalog shows the Compare link. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Catalog query parameters are `brand`, `type`, `minPrice`, `maxPrice`, `sort`, `page`, and `compare`. Page 1 and the default sort are omitted from the URL. An out-of-range page redirects to the nearest real page.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Routes live in `src/app`. Catalog data, filtering, and sorting live in `src/features/catalog`. Comparison selection and the table live in `src/features/comparison`. Shared controls live in `src/shared/ui`.
 
-## Deploy on Vercel
+## Tests
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm test
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vitest covers filtering, sorting, pagination, query parsing, comparison limits, formatting, and the catalog and comparison screens. Test files live in each feature's `__tests__` folder. `pnpm test` fails if statement, branch, function, or line coverage falls below 80%.
+
+## Environment
+
+`NEXT_PUBLIC_SITE_URL` is the public origin used for metadata, the canonical URL, `robots.txt`, the sitemap, and catalog structured data. It defaults to `http://localhost:3000`.
+
+Set it to the deployed origin before building for production:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://example.com pnpm build
+```
+
+## Continuous integration
+
+GitHub Actions runs on every pull request and on every push to `main`. The `quality` check formats, lints, typechecks, tests with the coverage gate, and builds the app. A failed check means that commit is not ready to release.
+
+## Deploy
+
+Import this repository into Vercel and set `NEXT_PUBLIC_SITE_URL` to the production origin.
+
+Production must wait for CI. In the Vercel project, open Deployment Checks, choose Add Checks, choose GitHub, and require **CI / quality**. Vercel can build the commit, but it does not assign that deployment to the production domain until `quality` succeeds. A failed format, lint, type, test, coverage, or build check leaves the current production release in place.
+
+After the first successful production release, add the live URL here.
