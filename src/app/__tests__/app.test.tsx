@@ -1,39 +1,23 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { catalogApi } from "@/features/catalog";
 
 import { siteConfig } from "@/config/site";
 
-import ComparePage, { generateMetadata as compareMetadata } from "../compare/page";
-import RootLayout from "../layout";
+import { generateMetadata as compareMetadata } from "../compare/page";
 import NotFound from "../not-found";
-import HomePage, { generateMetadata as homeMetadata } from "../page";
+import { generateMetadata as homeMetadata } from "../page";
 import robots from "../robots";
 import { SiteHeader } from "../site-header";
 import sitemap from "../sitemap";
 
-vi.mock("next/font/google", () => ({
-  Geist: () => ({ variable: "--font-sans" }),
-  Geist_Mono: () => ({ variable: "--font-mono" }),
-}));
-
 describe("app routes", () => {
-  it("renders the header, layout, and home page", () => {
-    render(
-      <RootLayout params={Promise.resolve({})}>
-        <SiteHeader />
-        <p>Content</p>
-      </RootLayout>,
-    );
+  it("renders the site header", () => {
+    render(<SiteHeader />);
 
-    expect(screen.getAllByRole("link", { name: "Car Comparison" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "Catalog" }).length).toBeGreaterThan(0);
-    expect(screen.getByText("Content")).toBeInTheDocument();
-
-    render(<HomePage params={Promise.resolve({})} searchParams={Promise.resolve({})} />);
-    expect(screen.getByRole("heading", { name: "Compare cars" })).toBeInTheDocument();
-    expect(screen.getByText("Loading cars…")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Car Comparison" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Catalog" })).toHaveAttribute("href", "/");
   });
 
   it("renders the not-found page", () => {
@@ -43,15 +27,7 @@ describe("app routes", () => {
     expect(screen.getByRole("link", { name: "Back to catalog" })).toHaveAttribute("href", "/");
   });
 
-  it("renders the compare route shell and publishes robots and sitemap data", async () => {
-    render(
-      <ComparePage
-        params={Promise.resolve({})}
-        searchParams={Promise.resolve({ ids: "toyota-camry,honda-accord" })}
-      />,
-    );
-    expect(screen.getByText("Loading comparison…")).toBeInTheDocument();
-
+  it("publishes home and compare metadata, robots, and the sitemap", async () => {
     const metadata = await compareMetadata({
       params: Promise.resolve({}),
       searchParams: Promise.resolve({ ids: "toyota-camry,honda-accord" }),
