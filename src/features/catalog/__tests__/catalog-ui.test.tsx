@@ -55,6 +55,21 @@ describe("catalog screens", () => {
     });
   });
 
+  it("leaves the catalog in place when clear or price blur does not change the URL", () => {
+    render(
+      <CatalogNavigation filters={emptyCatalogFilters()} bounds={bounds} page={2}>
+        <CarFilters brands={["Toyota"]} types={["sedan"]} />
+      </CatalogNavigation>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    fireEvent.blur(screen.getByLabelText("Minimum price"));
+    fireEvent.blur(screen.getByLabelText("Maximum price"));
+    fireEvent.submit(screen.getByRole("form", { name: "Filter cars" }));
+
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it("opens the mobile filter panel and updates the sort", () => {
     render(
       <CatalogNavigation filters={emptyCatalogFilters()} bounds={bounds} page={1}>

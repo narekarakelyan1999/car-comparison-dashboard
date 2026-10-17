@@ -11,7 +11,11 @@ import {
 import { useRouter } from "next/navigation";
 
 import type { CatalogFilters, PriceBounds } from "../model/filter-cars";
-import { catalogQueryHref, emptyCatalogFilters } from "../model/parse-catalog-query";
+import {
+  catalogQueryHref,
+  emptyCatalogFilters,
+  serializeCatalogQuery,
+} from "../model/parse-catalog-query";
 
 type CatalogNavigationValue = {
   isPending: boolean;
@@ -43,6 +47,13 @@ export function CatalogNavigation({ filters, bounds, page, children }: CatalogNa
   const isPending = isNavigating || optimisticFilters !== filters || optimisticPage !== page;
 
   function replaceFilters(next: CatalogFilters) {
+    const currentQuery = serializeCatalogQuery(optimisticFilters, bounds);
+    const nextQuery = serializeCatalogQuery(next, bounds);
+
+    if (currentQuery === nextQuery) {
+      return;
+    }
+
     const href = catalogQueryHref(next, bounds);
 
     startTransition(() => {
