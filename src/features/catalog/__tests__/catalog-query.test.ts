@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { absoluteUrl } from "@/config/site";
+
 import { catalogApi } from "../api/catalog-api";
 import type { Car } from "../model/car";
+import { formatCarTitle } from "../model/format-car";
 import {
   catalogFiltersFromDraft,
   catalogQueryHref,
@@ -112,27 +115,66 @@ describe("serializeCatalogQuery", () => {
         maxPrice: 40000,
         sort: "price-asc",
       },
-      ["toyota", "honda"],
       bounds,
     );
 
-    expect(query).toBe(
-      "brand=honda%2Ctoyota&type=sedan%2Csuv&maxPrice=40000&sort=price-asc&compare=toyota%2Chonda",
-    );
-    expect(serializeCatalogQuery(emptyCatalogFilters(), [], bounds)).toBe("");
+    expect(query).toBe("brand=honda%2Ctoyota&type=sedan%2Csuv&maxPrice=40000&sort=price-asc");
+    expect(serializeCatalogQuery(emptyCatalogFilters(), bounds)).toBe("");
   });
 });
 
 describe("catalogApi.loadPage", () => {
   it("redirects an out-of-range page and ignores an unknown brand without redirecting", () => {
-    const tooFar = catalogApi.loadPage({ page: "99" }, []);
-    const unknownBrand = catalogApi.loadPage({ brand: "Nope" }, []);
+    const tooFar = catalogApi.loadPage({ page: "99" });
+    const unknownBrand = catalogApi.loadPage({ brand: "Nope" });
 
     expect(tooFar.redirectHref).toBe("/?page=3");
     expect(tooFar.page).toBe(3);
     expect(unknownBrand.redirectHref).toBeNull();
     expect(unknownBrand.cars).toHaveLength(12);
-    expect(catalogApi.catalogHomeHref(["toyota-camry"])).toBe("/?compare=toyota-camry");
+    expect(catalogApi.catalogHomeHref()).toBe("/");
+
+    const firstPage = catalogApi.loadPage({});
+    const structured = JSON.parse(firstPage.jsonLd ?? "") as {
+      itemListElement: {
+        position: number;
+        item: { name: string; image: string; offers: { price: string } };
+      }[];
+    };
+    const firstCar = firstPage.cars[0];
+
+    expect(firstCar).toBeDefined();
+    expect(structured.itemListElement[0]?.position).toBe(1);
+    expect(structured.itemListElement[0]?.item.name).toBe(firstCar ? formatCarTitle(firstCar) : "");
+    expect(structured.itemListElement[0]?.item.image).toBe(absoluteUrl(firstCar?.imageSrc ?? ""));
+    expect(structured.itemListElement[0]?.item.offers.price).toBe(String(firstCar?.price));
+    expect(structured.itemListElement).toHaveLength(firstPage.cars.length);
+
+    const secondPage = catalogApi.loadPage({ page: "2" });
+    const secondStructured = JSON.parse(secondPage.jsonLd ?? "") as {
+      itemListElement: { item: { name: string } }[];
+    };
+
+    const secondCar = secondPage.cars[0];
+
+    expect(secondPage.canonicalPath).toBe("/?page=2");
+    expect(secondPage.indexable).toBe(true);
+    expect(secondStructured.itemListElement[0]?.item.name).toBe(
+      secondCar ? formatCarTitle(secondCar) : "",
+    );
+    expect(secondStructured.itemListElement[0]?.item.name).not.toBe(
+      structured.itemListElement[0]?.item.name,
+    );
+
+    const filtered = catalogApi.loadPage({ brand: "bmw", sort: "price-asc" });
+
+    expect(filtered.indexable).toBe(false);
+    expect(filtered.canonicalPath).toContain("brand=bmw");
+    expect(JSON.parse(filtered.jsonLd ?? "")).toMatchObject({
+      itemListElement: filtered.cars.map((car) => ({
+        item: { name: formatCarTitle(car), offers: { price: String(car.price) } },
+      })),
+    });
   });
 });
 
@@ -145,6 +187,6 @@ describe("catalog query links", () => {
 
     expect(filters.minPrice).toBe(25000);
     expect(filters.maxPrice).toBeNull();
-    expect(catalogQueryHref(filters, [], bounds, 2)).toBe("/?brand=toyota&minPrice=25000&page=2");
+    expect(catalogQueryHref(filters, bounds, 2)).toBe("/?brand=toyota&minPrice=25000&page=2");
   });
 });

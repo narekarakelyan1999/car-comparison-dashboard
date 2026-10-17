@@ -137,18 +137,12 @@ export function catalogHref(query: string): string {
   return `/?${query}`;
 }
 
-export function catalogQueryHref(
-  filters: CatalogFilters,
-  comparisonIds: readonly string[],
-  bounds: PriceBounds,
-  page = 1,
-): string {
-  return catalogHref(serializeCatalogQuery(filters, comparisonIds, bounds, page));
+export function catalogQueryHref(filters: CatalogFilters, bounds: PriceBounds, page = 1): string {
+  return catalogHref(serializeCatalogQuery(filters, bounds, page));
 }
 
 export function serializeCatalogQuery(
   filters: CatalogFilters,
-  comparisonIds: readonly string[],
   bounds: PriceBounds,
   page = 1,
 ): string {
@@ -179,10 +173,6 @@ export function serializeCatalogQuery(
 
   if (filters.sort !== DEFAULT_SORT_ID) {
     params.set(CATALOG_PARAMS.sort, filters.sort);
-  }
-
-  if (comparisonIds.length > 0) {
-    params.set(CATALOG_PARAMS.compare, comparisonIds.join(","));
   }
 
   if (page > 1) {

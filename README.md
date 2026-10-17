@@ -1,6 +1,6 @@
 # Car Comparison Dashboard
 
-A Next.js app for browsing cars and comparing up to three of them side by side. The catalog includes price, brand, model, weight, rating, and specifications. Filters, sorting, and the selected cars are stored in the URL.
+A Next.js app for browsing cars and comparing up to three of them side by side. The catalog includes price, brand, model, weight, rating, and specifications. Filters and sorting are stored in the URL. The cars you pick for comparison stay in the browser for this visit: a full reload clears them, and opening `/compare?ids=` directly does not fill that selection until you add or remove a car on that page.
 
 ## Requirements
 
@@ -32,12 +32,18 @@ pnpm start        # serve the production build
 
 ## Routes
 
-| URL                                | Page                                                                                                             |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `/`                                | Catalog. Filter by brand, type, and price, then sort and paginate.                                               |
-| `/compare?ids=toyota-camry,bmw-i4` | Side-by-side comparison. One car still renders. Two cars are required before the catalog shows the Compare link. |
+| URL                                | Page                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/`                                | Catalog. Filter by brand, type, and price, then sort and paginate.                                                                   |
+| `/compare?ids=toyota-camry,bmw-i4` | Side-by-side comparison. Fewer than two cars shows the empty state. Two cars are required before the catalog shows the Compare link. |
 
-Catalog query parameters are `brand`, `type`, `minPrice`, `maxPrice`, `sort`, `page`, and `compare`. Page 1 and the default sort are omitted from the URL. An out-of-range page redirects to the nearest real page.
+Catalog query parameters are `brand`, `type`, `minPrice`, `maxPrice`, `sort`, and `page`. Page 1 and the default sort are omitted from the URL. An out-of-range page redirects to the nearest real page. A `compare` parameter on a catalog URL is ignored.
+
+Search engines index the default catalog and its later pages. Page 1 canonicalizes to `/`, and page 2 canonicalizes to `/?page=2`. Filtered and sorted URLs keep their own canonical and are marked `noindex`, so those combinations stay usable without being indexed. Structured data lists only the cars on that page, in the same order, and each image URL uses the public site origin.
+
+The first three catalog cards use `priority` so the opening row is ready with the page. Later cards use `loading="lazy"`. Compare photos use the image optimizer and `priority` as well: a comparison has at most three pictures, and they sit at the top of that page. They are not `unoptimized`, because that would skip resizing and send the original file.
+
+`cacheComponents` prerenders the static shell (layout, header, and fonts) so repeat visits reuse it. Catalog and compare results are not wrapped in `use cache`: both follow the query string, and the car list is already a static module in the server bundle.
 
 Routes live in `src/app`. Catalog data, filtering, and sorting live in `src/features/catalog`. Comparison selection and the table live in `src/features/comparison`. Shared controls live in `src/shared/ui`.
 
@@ -51,7 +57,7 @@ Vitest covers filtering, sorting, pagination, query parsing, comparison limits, 
 
 ## Environment
 
-`NEXT_PUBLIC_SITE_URL` is the public origin used for metadata, the canonical URL, `robots.txt`, the sitemap, and catalog structured data. It defaults to `http://localhost:3000`.
+`NEXT_PUBLIC_SITE_URL` is the public origin used for metadata, canonical URLs, `robots.txt`, the sitemap, and catalog image URLs in structured data. It defaults to `http://localhost:3000` for local development. On Vercel, the production host is used when this variable is not set.
 
 Set it to the deployed origin before building for production:
 

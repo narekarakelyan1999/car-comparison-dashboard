@@ -1,7 +1,6 @@
 import {
   type Car,
   carApi,
-  CATALOG_PARAMS,
   catalogApi,
   firstParam,
   type SearchParamRecord,
@@ -45,18 +44,11 @@ export type ComparisonScreen = ComparisonResult & {
 };
 
 export type ComparisonApi = {
-  listFromCatalog(params: SearchParamRecord): ComparisonResult;
   listFromPage(params: SearchParamRecord): ComparisonResult;
   loadPage(params: SearchParamRecord): ComparisonScreen;
 };
 
 export const comparisonApi: ComparisonApi = {
-  listFromCatalog(params) {
-    const ids = parseCompareIds(firstParam(params[CATALOG_PARAMS.compare]), MAX_COMPARISON_CARS);
-
-    return resolveIds(ids);
-  },
-
   listFromPage(params) {
     const ids = parseCompareIds(firstParam(params[COMPARE_PAGE_PARAM]), MAX_COMPARISON_CARS);
 
@@ -73,7 +65,7 @@ export const comparisonApi: ComparisonApi = {
         comparison.unknownIds.length === 0
           ? null
           : formatRemovedCarCount(comparison.unknownIds.length),
-      backHref: catalogApi.catalogHomeHref(comparison.cars.map((car) => car.id)),
+      backHref: catalogApi.catalogHomeHref(),
       options: comparisonCarOptions(carApi.listCars()),
     };
   },

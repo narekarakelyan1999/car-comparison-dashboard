@@ -1,14 +1,32 @@
+"use client";
+
 import { ButtonLink } from "@/shared/ui";
 
-import { type Car, CATALOG_PARAMS, formatCarCount } from "@/features/catalog";
+import type { Car } from "@/features/catalog";
+import { CATALOG_PARAMS, formatCarCount } from "@/features/catalog";
 
 import { compareHref, MAX_COMPARISON_CARS, MIN_COMPARISON_CARS } from "../model/selection";
 
 import { CompareToggle } from "./compare-toggle";
+import { useComparisonSelection } from "./comparison-selection";
 
 type ComparisonBarProps = {
   cars: readonly Car[];
 };
+
+function selectedCars(cars: readonly Car[], ids: readonly string[]): Car[] {
+  const selected: Car[] = [];
+
+  for (const id of ids) {
+    const car = cars.find((item) => item.id === id);
+
+    if (car) {
+      selected.push(car);
+    }
+  }
+
+  return selected;
+}
 
 function CompareAction({ cars }: { cars: readonly Car[] }) {
   if (cars.length >= MIN_COMPARISON_CARS) {
@@ -37,38 +55,40 @@ function LimitNotice({ count }: { count: number }) {
 }
 
 export function ComparisonBar({ cars }: ComparisonBarProps) {
-  if (cars.length === 0) {
+  const selected = selectedCars(cars, useComparisonSelection().ids);
+
+  if (selected.length === 0) {
     return null;
   }
 
   return (
-    <section
-      aria-label="Selected cars for comparison"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm motion-reduce:transition-none"
-    >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-medium text-slate-900">{formatCarCount(cars.length)} selected</p>
-          <CompareAction cars={cars} />
+    <>
+      <div aria-hidden="true" className="h-44 sm:h-36" />
+      <section
+        aria-label="Selected cars for comparison"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm motion-reduce:transition-none"
+      >
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-medium text-slate-900">{formatCarCount(selected.length)} selected</p>
+            <CompareAction cars={selected} />
+          </div>
+          <ul className="flex list-none flex-wrap gap-2">
+            {selected.map((car) => (
+              <li key={car.id}>
+                <CompareToggle
+                  carId={car.id}
+                  carName={`${car.brand} ${car.model}`}
+                  pathname="/"
+                  paramName={CATALOG_PARAMS.compare}
+                  appearance="chip"
+                />
+              </li>
+            ))}
+          </ul>
+          <LimitNotice count={selected.length} />
         </div>
-        <ul className="flex list-none flex-wrap gap-2">
-          {cars.map((car) => (
-            <li key={car.id}>
-              <CompareToggle
-                carId={car.id}
-                carName={`${car.brand} ${car.model}`}
-                selected
-                disabled={false}
-                pathname="/"
-                paramName={CATALOG_PARAMS.compare}
-                appearance="chip"
-                selectedIds={cars.map((item) => item.id)}
-              />
-            </li>
-          ))}
-        </ul>
-        <LimitNotice count={cars.length} />
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

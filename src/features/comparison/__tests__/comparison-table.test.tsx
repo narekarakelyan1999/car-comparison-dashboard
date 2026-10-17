@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Car } from "@/features/catalog";
 
+import { ComparisonNavigation } from "../ui/comparison-navigation";
+import { ComparisonSelectionProvider } from "../ui/comparison-selection";
 import { ComparisonTable } from "../ui/comparison-table";
 
 vi.mock("next/image", () => ({
@@ -41,24 +43,29 @@ function sampleCar(overrides: Partial<Car>): Car {
 describe("ComparisonTable", () => {
   it("shows both prices and marks the cheaper car as the lowest price", () => {
     render(
-      <ComparisonTable
-        cars={[
-          sampleCar({
-            id: "cheap",
-            brand: "Toyota",
-            model: "Corolla",
-            price: 20000,
-            imageAlt: "Toyota Corolla",
-          }),
-          sampleCar({
-            id: "pricey",
-            brand: "BMW",
-            model: "X5",
-            price: 40000,
-            imageAlt: "BMW X5",
-          }),
-        ]}
-      />,
+      <ComparisonSelectionProvider>
+        <ComparisonNavigation>
+          <ComparisonTable
+            cars={[
+              sampleCar({
+                id: "cheap",
+                brand: "Toyota",
+                model: "Corolla",
+                price: 20000,
+                imageAlt: "Toyota Corolla",
+              }),
+              sampleCar({
+                id: "pricey",
+                brand: "BMW",
+                model: "X5",
+                price: 40000,
+                imageAlt: "BMW X5",
+              }),
+            ]}
+            onRemove={() => undefined}
+          />
+        </ComparisonNavigation>
+      </ComparisonSelectionProvider>,
     );
 
     expect(screen.getByRole("table", { name: "Specification comparison" })).toBeInTheDocument();

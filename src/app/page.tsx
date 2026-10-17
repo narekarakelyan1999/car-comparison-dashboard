@@ -1,17 +1,23 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { CATALOG_PARAMS, CatalogPage, type SearchParamRecord } from "@/features/catalog";
 import {
-  CompareToggle,
-  comparisonApi,
-  ComparisonBar,
-  isSelectionDisabled,
-} from "@/features/comparison";
+  carApi,
+  CATALOG_PARAMS,
+  catalogApi,
+  CatalogPage,
+  type SearchParamRecord,
+} from "@/features/catalog";
+import { CompareToggle, ComparisonBar } from "@/features/comparison";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-};
+export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
+  const page = catalogApi.loadPage(await searchParams);
+
+  return {
+    alternates: { canonical: page.canonicalPath },
+    robots: { index: page.indexable, follow: true },
+  };
+}
 
 export default function HomePage({ searchParams }: PageProps<"/">) {
   return (
@@ -31,25 +37,18 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
 
 async function HomeCatalog({ searchParams }: { searchParams: Promise<SearchParamRecord> }) {
   const params = await searchParams;
-  const selectedCars = comparisonApi.listFromCatalog(params).cars;
-
-  const selectedIds = selectedCars.map((car) => car.id);
 
   return (
     <CatalogPage
       searchParams={params}
-      selectedIds={selectedIds}
-      comparison={<ComparisonBar cars={selectedCars} />}
+      comparison={<ComparisonBar cars={carApi.listCars()} />}
       renderAction={(car) => (
         <CompareToggle
           appearance="add"
           carId={car.id}
           carName={`${car.brand} ${car.model}`}
-          disabled={isSelectionDisabled(selectedIds, car.id)}
           pathname="/"
           paramName={CATALOG_PARAMS.compare}
-          selected={selectedIds.includes(car.id)}
-          selectedIds={selectedIds}
         />
       )}
     />

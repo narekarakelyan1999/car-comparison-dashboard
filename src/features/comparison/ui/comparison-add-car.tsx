@@ -5,7 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Select } from "@/shared/ui";
 
-import { COMPARE_PAGE_PARAM, MAX_COMPARISON_CARS, nextSelectionHref } from "../model/selection";
+import {
+  COMPARE_PAGE_PARAM,
+  MAX_COMPARISON_CARS,
+  nextSelectionHref,
+  toggleComparisonId,
+} from "../model/selection";
+
+import { useComparisonNavigation } from "./comparison-navigation";
+import { useComparisonSelection } from "./comparison-selection";
 
 type ComparisonCarOption = {
   id: string;
@@ -36,6 +44,8 @@ function selectionStatus(atLimit: boolean, count: number): string {
 export function ComparisonAddCar({ cars, selectedIds }: ComparisonAddCarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const selection = useComparisonSelection();
+  const { startNavigation } = useComparisonNavigation();
   const atLimit = selectedIds.length >= MAX_COMPARISON_CARS;
   const selected = new Set(selectedIds);
   const available = cars.filter((car) => !selected.has(car.id));
@@ -59,7 +69,12 @@ export function ComparisonAddCar({ cars, selectedIds }: ComparisonAddCarProps) {
       return;
     }
 
-    router.replace(href, { scroll: false });
+    const nextIds = toggleComparisonId(selectedIds, carId);
+
+    startNavigation(() => {
+      selection.replace(nextIds);
+      router.replace(href, { scroll: false });
+    });
   }
 
   return (

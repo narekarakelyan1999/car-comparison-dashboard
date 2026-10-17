@@ -10,9 +10,18 @@ import { CompareToggle } from "./compare-toggle";
 
 type ComparisonTableProps = {
   cars: readonly Car[];
+  onRemove: (carId: string) => void;
 };
 
-function ComparisonColumn({ car, selectedIds }: { car: Car; selectedIds: readonly string[] }) {
+function ComparisonColumn({
+  car,
+  selectedIds,
+  onRemove,
+}: {
+  car: Car;
+  selectedIds: readonly string[];
+  onRemove: (carId: string) => void;
+}) {
   return (
     <th
       id={`compare-car-${car.id}`}
@@ -25,8 +34,8 @@ function ComparisonColumn({ car, selectedIds }: { car: Car; selectedIds: readonl
             src={car.imageSrc}
             alt={car.imageAlt}
             fill
-            loading="eager"
-            unoptimized
+            priority
+            sizes="(min-width: 1024px) 33vw, 50vw"
             className="object-contain p-2"
           />
         </div>
@@ -43,12 +52,12 @@ function ComparisonColumn({ car, selectedIds }: { car: Car; selectedIds: readonl
           <CompareToggle
             carId={car.id}
             carName={`${car.brand} ${car.model}`}
-            selected
-            disabled={false}
             pathname="/compare"
             paramName={COMPARE_PAGE_PARAM}
             appearance="remove"
+            selected
             selectedIds={selectedIds}
+            onRemove={onRemove}
           />
         </div>
       </div>
@@ -56,7 +65,7 @@ function ComparisonColumn({ car, selectedIds }: { car: Car; selectedIds: readonl
   );
 }
 
-export function ComparisonTable({ cars }: ComparisonTableProps) {
+export function ComparisonTable({ cars, onRemove }: ComparisonTableProps) {
   const rows = buildComparisonRows(cars);
   const selectedIds = cars.map((car) => car.id);
 
@@ -67,7 +76,12 @@ export function ComparisonTable({ cars }: ComparisonTableProps) {
         <thead>
           <tr>
             {cars.map((car) => (
-              <ComparisonColumn key={car.id} car={car} selectedIds={selectedIds} />
+              <ComparisonColumn
+                key={car.id}
+                car={car}
+                selectedIds={selectedIds}
+                onRemove={onRemove}
+              />
             ))}
           </tr>
         </thead>

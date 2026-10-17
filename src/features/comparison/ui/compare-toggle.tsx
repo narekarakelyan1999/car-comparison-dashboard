@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { CATALOG_PARAMS } from "@/features/catalog";
 
 import type { COMPARE_PAGE_PARAM } from "../model/selection";
-import { nextSelectionHref } from "../model/selection";
+import { isSelectionDisabled, nextSelectionHref, toggleComparisonId } from "../model/selection";
+
+import { useComparisonSelection } from "./comparison-selection";
 
 type CompareParamName = typeof CATALOG_PARAMS.compare | typeof COMPARE_PAGE_PARAM;
 type CompareAppearance = "add" | "remove" | "chip";
@@ -13,12 +15,13 @@ type CompareAppearance = "add" | "remove" | "chip";
 type CompareToggleProps = {
   carId: string;
   carName: string;
-  selected: boolean;
-  disabled: boolean;
   pathname: "/" | "/compare";
   paramName: CompareParamName;
   appearance: CompareAppearance;
-  selectedIds: readonly string[];
+  selected?: boolean;
+  disabled?: boolean;
+  selectedIds?: readonly string[];
+  onRemove?: (carId: string) => void;
 };
 
 const appearanceClassName: Record<CompareAppearance, string> = {
@@ -70,17 +73,34 @@ function ChipMark({ appearance }: { appearance: CompareAppearance }) {
 export function CompareToggle({
   carId,
   carName,
-  selected,
-  disabled,
   pathname,
   paramName,
   appearance,
-  selectedIds,
+  selected = false,
+  disabled = false,
+  selectedIds = [],
+  onRemove,
 }: CompareToggleProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const selection = useComparisonSelection();
+  const onCatalog = pathname === "/";
+  const checked = onCatalog ? selection.ids.includes(carId) : selected;
+  const controlDisabled = onCatalog ? isSelectionDisabled(selection.ids, carId) : disabled;
 
   function onChange() {
+    if (onCatalog) {
+      selection.toggle(carId);
+
+      return;
+    }
+
+    if (onRemove) {
+      onRemove(carId);
+
+      return;
+    }
+
     const href = nextSelectionHref(
       pathname,
       paramName,
@@ -93,6 +113,7 @@ export function CompareToggle({
       return;
     }
 
+    selection.replace(toggleComparisonId(selectedIds, carId));
     router.replace(href, { scroll: false });
   }
 
@@ -100,13 +121,13 @@ export function CompareToggle({
     <label className={`${appearanceClassName[appearance]} ${pressClassName}`}>
       <input
         type="checkbox"
-        className="sr-only"
-        checked={selected}
-        disabled={disabled}
-        aria-label={accessibleName(appearance, selected, carName)}
+        className="sr-only pointer-events-none"
+        checked={checked}
+        disabled={controlDisabled}
+        aria-label={accessibleName(appearance, checked, carName)}
         onChange={onChange}
       />
-      <span>{toggleLabel(appearance, selected, carName)}</span>
+      <span>{toggleLabel(appearance, checked, carName)}</span>
       <ChipMark appearance={appearance} />
     </label>
   );

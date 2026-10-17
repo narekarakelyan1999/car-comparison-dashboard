@@ -21,7 +21,7 @@ import {
   type SearchParamRecord,
   serializeCatalogQuery,
 } from "../model/parse-catalog-query";
-import { sortCars } from "../model/sort-cars";
+import { DEFAULT_SORT_ID, sortCars } from "../model/sort-cars";
 
 import { carApi } from "./car-api";
 
@@ -38,20 +38,22 @@ export type CatalogScreen = {
   summary: string | null;
   clearHref: string;
   filtersActive: boolean;
+  indexable: boolean;
+  canonicalPath: string;
   jsonLd: string | null;
 };
 
-function catalogHomeHref(selectedIds: readonly string[], bounds: PriceBounds): string {
-  return catalogHref(serializeCatalogQuery(emptyCatalogFilters(), selectedIds, bounds));
+function catalogHomeHref(bounds: PriceBounds): string {
+  return catalogHref(serializeCatalogQuery(emptyCatalogFilters(), bounds));
 }
 
 export type CatalogApi = {
-  loadPage(params: SearchParamRecord, selectedIds: readonly string[]): CatalogScreen;
-  catalogHomeHref(selectedIds: readonly string[]): string;
+  loadPage(params: SearchParamRecord): CatalogScreen;
+  catalogHomeHref(): string;
 };
 
 export const catalogApi: CatalogApi = {
-  loadPage(params, selectedIds) {
+  loadPage(params) {
     const all = carApi.listCars();
     const filters = parseCatalogFilters(params, all);
     const bounds = priceBounds(all);
@@ -62,12 +64,13 @@ export const catalogApi: CatalogApi = {
     const requestedPage = firstParam(params[CATALOG_PARAMS.page]);
     const canonicalPage = result.page > 1 ? String(result.page) : undefined;
     const filtersActive = hasActiveFilters(filters);
+    const canonicalPath = catalogHref(serializeCatalogQuery(filters, bounds, result.page));
 
     return {
       redirectHref:
         requestedPage === canonicalPage
           ? null
-          : catalogHref(serializeCatalogQuery(filters, selectedIds, bounds, result.page)),
+          : catalogHref(serializeCatalogQuery(filters, bounds, result.page)),
       filters,
       bounds,
       brands: listBrands(all),
@@ -82,14 +85,15 @@ export const catalogApi: CatalogApi = {
         result.total,
       ),
       summary: formatAppliedFilters(filters, bounds),
-      clearHref: catalogHomeHref(selectedIds, bounds),
+      clearHref: catalogHomeHref(bounds),
       filtersActive,
-      jsonLd:
-        filtersActive || result.page !== 1 ? null : JSON.stringify(buildCarCatalogJsonLd(all)),
+      indexable: !filtersActive && filters.sort === DEFAULT_SORT_ID,
+      canonicalPath,
+      jsonLd: result.cars.length === 0 ? null : JSON.stringify(buildCarCatalogJsonLd(result.cars)),
     };
   },
 
-  catalogHomeHref(selectedIds) {
-    return catalogHomeHref(selectedIds, priceBounds(carApi.listCars()));
+  catalogHomeHref() {
+    return catalogHomeHref(priceBounds(carApi.listCars()));
   },
 };

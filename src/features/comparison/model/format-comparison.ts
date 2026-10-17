@@ -18,6 +18,7 @@ import {
   highlightedIdsFor,
   isComparisonHighlightKey,
 } from "./highlight-cars";
+import { MIN_COMPARISON_CARS } from "./selection";
 
 export type ComparisonTableCell = {
   carId: string;
@@ -99,7 +100,7 @@ export function formatRemovedCarCount(count: number): string {
 }
 
 export function comparisonTitle(cars: readonly Car[]): string {
-  if (cars.length === 0) {
+  if (cars.length < MIN_COMPARISON_CARS) {
     return "Compare cars";
   }
 

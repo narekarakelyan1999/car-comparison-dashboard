@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { ComparisonSelectionProvider } from "@/features/comparison";
+
 import { siteConfig } from "@/config/site";
 
 import { SiteHeader } from "./site-header";
@@ -46,13 +48,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <SiteHeader />
-        <main
-          id="main"
-          tabIndex={-1}
-          className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
-        >
-          {children}
-        </main>
+        <ComparisonSelectionProvider>
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+          >
+            {children}
+          </main>
+        </ComparisonSelectionProvider>
       </body>
     </html>
   );

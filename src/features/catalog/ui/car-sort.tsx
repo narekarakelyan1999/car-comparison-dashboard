@@ -1,21 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { Select } from "@/shared/ui";
 
-import type { CatalogFilters, PriceBounds } from "../model/filter-cars";
-import { catalogQueryHref } from "../model/parse-catalog-query";
 import { CAR_SORT_OPTIONS, isCarSortId } from "../model/sort-cars";
 
-type CarSortProps = {
-  filters: CatalogFilters;
-  bounds: PriceBounds;
-  comparisonIds: readonly string[];
-};
+import { useCatalogNavigation } from "./catalog-navigation";
 
-export function CarSort({ filters, bounds, comparisonIds }: CarSortProps) {
-  const router = useRouter();
+export function CarSort() {
+  const { filters, replaceFilters } = useCatalogNavigation();
 
   return (
     <Select
@@ -30,9 +22,7 @@ export function CarSort({ filters, bounds, comparisonIds }: CarSortProps) {
           return;
         }
 
-        router.replace(catalogQueryHref({ ...filters, sort }, comparisonIds, bounds), {
-          scroll: false,
-        });
+        replaceFilters({ ...filters, sort });
       }}
     >
       {CAR_SORT_OPTIONS.map((option) => (

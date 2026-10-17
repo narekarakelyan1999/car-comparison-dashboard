@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { carApi } from "../api/car-api";
@@ -227,7 +228,8 @@ describe("cars dataset", () => {
           car.rating <= 5 &&
           car.price > 0 &&
           car.weightKg > 0 &&
-          car.imageSrc === `/cars/${car.id}.png`,
+          car.imageSrc === `/cars/${car.id}.png` &&
+          existsSync(`public${car.imageSrc}`),
       ),
     ).toBe(true);
   });

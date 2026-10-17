@@ -1,13 +1,16 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Image from "next/image";
+
+import { useComparisonSelection } from "@/features/comparison/ui/comparison-selection";
 
 import { type Car, CAR_TYPE_LABELS } from "../model/car";
 import { formatPrice, formatRating, formatWeight } from "../model/format-car";
 
 type CarCardProps = {
   car: Car;
-  selected: boolean;
-  imageLoading?: "eager" | "lazy";
+  priority?: boolean;
   children?: ReactNode;
 };
 
@@ -17,7 +20,10 @@ function cardClassName(selected: boolean): string {
   return `flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ${border}`;
 }
 
-export function CarCard({ car, selected, imageLoading = "lazy", children }: CarCardProps) {
+export function CarCard({ car, priority = false, children }: CarCardProps) {
+  const selected = useComparisonSelection().ids.includes(car.id);
+  const imageProps = priority ? { priority: true as const } : { loading: "lazy" as const };
+
   return (
     <article className={cardClassName(selected)}>
       <div className="relative aspect-video bg-slate-100">
@@ -25,9 +31,9 @@ export function CarCard({ car, selected, imageLoading = "lazy", children }: CarC
           src={car.imageSrc}
           alt={car.imageAlt}
           fill
-          loading={imageLoading}
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-contain p-3"
+          {...imageProps}
         />
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">

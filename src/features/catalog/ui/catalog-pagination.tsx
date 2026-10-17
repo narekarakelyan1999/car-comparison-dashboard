@@ -1,91 +1,56 @@
-import { Button, buttonClassName, ButtonLink } from "@/shared/ui";
+"use client";
 
-import type { CatalogFilters, PriceBounds } from "../model/filter-cars";
+import type { MouseEvent } from "react";
+
+import { Button, buttonClassName } from "@/shared/ui";
+
 import { catalogQueryHref } from "../model/parse-catalog-query";
 
+import { useCatalogNavigation } from "./catalog-navigation";
+
 type CatalogPaginationProps = {
-  page: number;
   pageCount: number;
-  filters: CatalogFilters;
-  bounds: PriceBounds;
-  comparisonIds: readonly string[];
 };
 
-function pageHref(
-  page: number,
-  filters: CatalogFilters,
-  comparisonIds: readonly string[],
-  bounds: PriceBounds,
-): string {
-  return catalogQueryHref(filters, comparisonIds, bounds, page);
+function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
+  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
-function PreviousPage({ page, href }: { page: number; href: string }) {
-  if (page <= 1) {
-    return (
-      <Button size="compact" disabled>
-        Previous
-      </Button>
-    );
-  }
-
-  return (
-    <ButtonLink href={href} rel="prev" size="compact">
-      Previous
-    </ButtonLink>
-  );
-}
-
-function NextPage({ page, pageCount, href }: { page: number; pageCount: number; href: string }) {
-  if (page >= pageCount) {
-    return (
-      <Button size="compact" disabled>
-        Next
-      </Button>
-    );
-  }
-
-  return (
-    <ButtonLink href={href} rel="next" size="compact">
-      Next
-    </ButtonLink>
-  );
-}
-
-function PageNumber({
-  pageNumber,
-  page,
+function PageLink({
   href,
+  pageNumber,
+  rel,
+  children,
 }: {
-  pageNumber: number;
-  page: number;
   href: string;
+  pageNumber: number;
+  rel?: string;
+  children: string;
 }) {
-  if (pageNumber === page) {
-    return (
-      <span
-        aria-current="page"
-        className={buttonClassName({ variant: "primary", size: "compact", interactive: false })}
-      >
-        {pageNumber}
-      </span>
-    );
-  }
+  const { pushPage } = useCatalogNavigation();
 
   return (
-    <ButtonLink href={href} size="compact">
-      {pageNumber}
-    </ButtonLink>
+    <a
+      href={href}
+      rel={rel}
+      className={buttonClassName({ variant: "secondary", size: "compact" })}
+      onClick={(event) => {
+        if (!isPlainClick(event)) {
+          return;
+        }
+
+        event.preventDefault();
+        pushPage(pageNumber);
+      }}
+    >
+      {children}
+    </a>
   );
 }
 
-export function CatalogPagination({
-  page,
-  pageCount,
-  filters,
-  bounds,
-  comparisonIds,
-}: CatalogPaginationProps) {
+export function CatalogPagination({ pageCount }: CatalogPaginationProps) {
+  const { page, filters, bounds } = useCatalogNavigation();
+
   if (pageCount <= 1) {
     return null;
   }
@@ -101,20 +66,55 @@ export function CatalogPagination({
         Page {page} of {pageCount}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <PreviousPage page={page} href={pageHref(page - 1, filters, comparisonIds, bounds)} />
-        {pages.map((pageNumber) => (
-          <PageNumber
-            key={pageNumber}
-            pageNumber={pageNumber}
-            page={page}
-            href={pageHref(pageNumber, filters, comparisonIds, bounds)}
-          />
-        ))}
-        <NextPage
-          page={page}
-          pageCount={pageCount}
-          href={pageHref(page + 1, filters, comparisonIds, bounds)}
-        />
+        {page <= 1 ? (
+          <Button size="compact" disabled>
+            Previous
+          </Button>
+        ) : (
+          <PageLink
+            href={catalogQueryHref(filters, bounds, page - 1)}
+            pageNumber={page - 1}
+            rel="prev"
+          >
+            Previous
+          </PageLink>
+        )}
+        {pages.map((pageNumber) =>
+          pageNumber === page ? (
+            <span
+              key={pageNumber}
+              aria-current="page"
+              className={buttonClassName({
+                variant: "primary",
+                size: "compact",
+                interactive: false,
+              })}
+            >
+              {pageNumber}
+            </span>
+          ) : (
+            <PageLink
+              key={pageNumber}
+              href={catalogQueryHref(filters, bounds, pageNumber)}
+              pageNumber={pageNumber}
+            >
+              {String(pageNumber)}
+            </PageLink>
+          ),
+        )}
+        {page >= pageCount ? (
+          <Button size="compact" disabled>
+            Next
+          </Button>
+        ) : (
+          <PageLink
+            href={catalogQueryHref(filters, bounds, page + 1)}
+            pageNumber={page + 1}
+            rel="next"
+          >
+            Next
+          </PageLink>
+        )}
       </div>
     </nav>
   );

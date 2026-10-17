@@ -1,29 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button, Checkbox, TextField } from "@/shared/ui";
 
 import { CAR_TYPE_LABELS, type CarType } from "../model/car";
-import {
-  activeFilterCount,
-  type CatalogFilters,
-  type PriceBounds,
-  toggleFilterValue,
-} from "../model/filter-cars";
-import {
-  catalogFiltersFromDraft,
-  catalogQueryHref,
-  emptyCatalogFilters,
-} from "../model/parse-catalog-query";
+import { activeFilterCount, type CatalogFilters, toggleFilterValue } from "../model/filter-cars";
+import { catalogFiltersFromDraft, emptyCatalogFilters } from "../model/parse-catalog-query";
+
+import { useCatalogNavigation } from "./catalog-navigation";
 
 type CarFiltersProps = {
-  filters: CatalogFilters;
   brands: readonly string[];
   types: readonly CarType[];
-  bounds: PriceBounds;
-  comparisonIds: readonly string[];
 };
 
 function useDraftPrice(serverValue: string): readonly [string, (value: string) => void] {
@@ -50,8 +39,8 @@ function filterStatusLabel(activeCount: number, filtersOpen: boolean): string {
   return "Show";
 }
 
-export function CarFilters({ filters, brands, types, bounds, comparisonIds }: CarFiltersProps) {
-  const router = useRouter();
+export function CarFilters({ brands, types }: CarFiltersProps) {
+  const { filters, bounds, replaceFilters } = useCatalogNavigation();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [minPrice, setMinPrice] = useDraftPrice(String(filters.minPrice ?? bounds.min));
   const [maxPrice, setMaxPrice] = useDraftPrice(String(filters.maxPrice ?? bounds.max));
@@ -59,14 +48,7 @@ export function CarFilters({ filters, brands, types, bounds, comparisonIds }: Ca
   const panelClassName = filtersOpen ? "space-y-6 px-4 py-4" : "space-y-6 px-4 py-4 max-lg:hidden";
 
   function applyFilters(patch: Partial<CatalogFilters> = {}) {
-    router.replace(
-      catalogQueryHref(
-        catalogFiltersFromDraft(filters, minPrice, maxPrice, patch),
-        comparisonIds,
-        bounds,
-      ),
-      { scroll: false },
-    );
+    replaceFilters(catalogFiltersFromDraft(filters, minPrice, maxPrice, patch));
   }
 
   return (
@@ -149,15 +131,7 @@ export function CarFilters({ filters, brands, types, bounds, comparisonIds }: Ca
               />
             </div>
           </fieldset>
-          <Button
-            onClick={() => {
-              router.replace(catalogQueryHref(emptyCatalogFilters(), comparisonIds, bounds), {
-                scroll: false,
-              });
-            }}
-          >
-            Clear filters
-          </Button>
+          <Button onClick={() => replaceFilters(emptyCatalogFilters())}>Clear filters</Button>
         </div>
       </div>
     </form>

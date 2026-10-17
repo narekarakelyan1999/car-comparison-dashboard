@@ -82,9 +82,6 @@ describe("comparison selection", () => {
         "toyota-camry",
       ]),
     ).toBe("/?brand=toyota");
-    expect(
-      comparisonApi.listFromCatalog({ compare: "toyota-camry" }).cars.map((car) => car.id),
-    ).toEqual(["toyota-camry"]);
   });
 
   it("keeps known cars and reports ids that are not in the catalog", () => {

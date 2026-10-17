@@ -1,17 +1,20 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ComparisonSelectionProvider } from "@/features/comparison";
+
 import { CatalogPage } from "../catalog-page";
 import { emptyCatalogFilters } from "../model/parse-catalog-query";
 import { CarFilters } from "../ui/car-filters";
 import { CarList } from "../ui/car-list";
 import { CarSort } from "../ui/car-sort";
+import { CatalogNavigation } from "../ui/catalog-navigation";
 import { CatalogPagination } from "../ui/catalog-pagination";
 
 const replace = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
   redirect: (href: string) => {
     throw new Error(`REDIRECT ${href}`);
@@ -27,13 +30,13 @@ describe("catalog screens", () => {
 
   it("filters, sorts, and clears through the catalog URL", () => {
     render(
-      <CarFilters
+      <CatalogNavigation
         filters={{ ...emptyCatalogFilters(), brands: ["Toyota"] }}
-        brands={["Honda", "Toyota"]}
-        types={["sedan", "suv"]}
         bounds={bounds}
-        comparisonIds={["toyota-camry"]}
-      />,
+        page={1}
+      >
+        <CarFilters brands={["Honda", "Toyota"]} types={["sedan", "suv"]} />
+      </CatalogNavigation>,
     );
 
     expect(screen.getByRole("button", { name: /Filters/ })).toHaveTextContent("1 applied");
@@ -43,7 +46,7 @@ describe("catalog screens", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(replace).toHaveBeenCalledWith("/?compare=toyota-camry", { scroll: false });
+    expect(replace).toHaveBeenCalledWith("/", { scroll: false });
 
     fireEvent.change(screen.getByLabelText("Minimum price"), { target: { value: "30000" } });
     fireEvent.blur(screen.getByLabelText("Minimum price"));
@@ -54,16 +57,10 @@ describe("catalog screens", () => {
 
   it("opens the mobile filter panel and updates the sort", () => {
     render(
-      <>
-        <CarFilters
-          filters={emptyCatalogFilters()}
-          brands={["Toyota"]}
-          types={["sedan"]}
-          bounds={bounds}
-          comparisonIds={[]}
-        />
-        <CarSort filters={emptyCatalogFilters()} bounds={bounds} comparisonIds={[]} />
-      </>,
+      <CatalogNavigation filters={emptyCatalogFilters()} bounds={bounds} page={1}>
+        <CarFilters brands={["Toyota"]} types={["sedan"]} />
+        <CarSort />
+      </CatalogNavigation>,
     );
 
     const toggle = screen.getByRole("button", { name: /Filters/ });
@@ -81,7 +78,9 @@ describe("catalog screens", () => {
 
   it("shows an empty catalog and a filled page of results", () => {
     const { rerender } = render(
-      <CarList cars={[]} clearFiltersHref="/" selectedIds={[]} renderAction={() => null} />,
+      <ComparisonSelectionProvider>
+        <CarList cars={[]} clearFiltersHref="/" renderAction={() => null} />
+      </ComparisonSelectionProvider>,
     );
 
     expect(
@@ -89,31 +88,32 @@ describe("catalog screens", () => {
     ).toBeInTheDocument();
 
     rerender(
-      <CarList
-        cars={[
-          {
-            id: "toyota-camry",
-            brand: "Toyota",
-            model: "Camry",
-            year: 2024,
-            type: "sedan",
-            price: 28400,
-            weightKg: 1580,
-            rating: 4.6,
-            reviewCount: 12,
-            horsepower: 203,
-            fuelType: "gasoline",
-            transmission: "automatic",
-            drivetrain: "fwd",
-            seats: 5,
-            imageSrc: "/cars/toyota-camry.png",
-            imageAlt: "Toyota Camry",
-          },
-        ]}
-        clearFiltersHref="/"
-        selectedIds={["toyota-camry"]}
-        renderAction={() => <button type="button">Add to compare</button>}
-      />,
+      <ComparisonSelectionProvider>
+        <CarList
+          cars={[
+            {
+              id: "toyota-camry",
+              brand: "Toyota",
+              model: "Camry",
+              year: 2024,
+              type: "sedan",
+              price: 28400,
+              weightKg: 1580,
+              rating: 4.6,
+              reviewCount: 12,
+              horsepower: 203,
+              fuelType: "gasoline",
+              transmission: "automatic",
+              drivetrain: "fwd",
+              seats: 5,
+              imageSrc: "/cars/toyota-camry.png",
+              imageAlt: "Toyota Camry",
+            },
+          ]}
+          clearFiltersHref="/"
+          renderAction={() => <button type="button">Add to compare</button>}
+        />
+      </ComparisonSelectionProvider>,
     );
 
     expect(screen.getByRole("heading", { name: "Toyota Camry" })).toBeInTheDocument();
@@ -124,13 +124,9 @@ describe("catalog screens", () => {
   it("disables the page controls at each end and hides them on a single page", () => {
     const filters = emptyCatalogFilters();
     const { rerender } = render(
-      <CatalogPagination
-        page={1}
-        pageCount={3}
-        filters={filters}
-        bounds={bounds}
-        comparisonIds={[]}
-      />,
+      <CatalogNavigation filters={filters} bounds={bounds} page={1}>
+        <CatalogPagination pageCount={3} />
+      </CatalogNavigation>,
     );
 
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
@@ -138,26 +134,18 @@ describe("catalog screens", () => {
     expect(screen.getByText("1")).toHaveAttribute("aria-current", "page");
 
     rerender(
-      <CatalogPagination
-        page={3}
-        pageCount={3}
-        filters={filters}
-        bounds={bounds}
-        comparisonIds={[]}
-      />,
+      <CatalogNavigation filters={filters} bounds={bounds} page={3}>
+        <CatalogPagination pageCount={3} />
+      </CatalogNavigation>,
     );
 
     expect(screen.getByRole("link", { name: "Previous" })).toHaveAttribute("href", "/?page=2");
     expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
 
     rerender(
-      <CatalogPagination
-        page={1}
-        pageCount={1}
-        filters={filters}
-        bounds={bounds}
-        comparisonIds={[]}
-      />,
+      <CatalogNavigation filters={filters} bounds={bounds} page={1}>
+        <CatalogPagination pageCount={1} />
+      </CatalogNavigation>,
     );
 
     expect(screen.queryByRole("navigation", { name: "Catalog pages" })).not.toBeInTheDocument();
@@ -165,12 +153,13 @@ describe("catalog screens", () => {
 
   it("renders the catalog and redirects an invalid page", () => {
     render(
-      <CatalogPage
-        searchParams={{}}
-        selectedIds={[]}
-        comparison={<p>No cars selected</p>}
-        renderAction={() => <button type="button">Add to compare</button>}
-      />,
+      <ComparisonSelectionProvider>
+        <CatalogPage
+          searchParams={{}}
+          comparison={<p>No cars selected</p>}
+          renderAction={() => <button type="button">Add to compare</button>}
+        />
+      </ComparisonSelectionProvider>,
     );
 
     expect(screen.getByText("Showing 1–12 of 32 cars")).toBeInTheDocument();
@@ -179,13 +168,8 @@ describe("catalog screens", () => {
 
     expect(() =>
       render(
-        <CatalogPage
-          searchParams={{ page: "99" }}
-          selectedIds={["toyota-camry"]}
-          comparison={null}
-          renderAction={() => null}
-        />,
+        <CatalogPage searchParams={{ page: "99" }} comparison={null} renderAction={() => null} />,
       ),
-    ).toThrow("REDIRECT /?compare=toyota-camry&page=3");
+    ).toThrow("REDIRECT /?page=3");
   });
 });
