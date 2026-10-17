@@ -16,11 +16,4 @@ export {
   formatRating,
   formatWeight,
 } from "./model/format-car";
-export {
-  CATALOG_PARAMS,
-  catalogHref,
-  emptyCatalogFilters,
-  firstParam,
-  type SearchParamRecord,
-  serializeCatalogQuery,
-} from "./model/parse-catalog-query";
+export { CATALOG_PARAMS, firstParam, type SearchParamRecord } from "./model/parse-catalog-query";

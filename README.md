@@ -39,11 +39,11 @@ pnpm start        # serve the production build
 
 Catalog query parameters are `brand`, `type`, `minPrice`, `maxPrice`, `sort`, and `page`. Page 1 and the default sort are omitted from the URL. An out-of-range page redirects to the nearest real page. A `compare` parameter on a catalog URL is ignored.
 
-Search engines index the default catalog and its later pages. Page 1 canonicalizes to `/`, and page 2 canonicalizes to `/?page=2`. Filtered and sorted URLs keep their own canonical and are marked `noindex`, so those combinations stay usable without being indexed. Structured data lists only the cars on that page, in the same order, and each image URL uses the public site origin.
+The document head includes a description, author, category, and keywords for the catalog. Search engines index the default catalog and its later pages. Page 1 canonicalizes to `/`, and page 2 canonicalizes to `/?page=2`. Filtered and sorted URLs keep their own canonical and are marked `noindex`, so those combinations stay usable without being indexed. Structured data lists only the cars on that page, in the same order, and each image URL uses the public site origin.
 
 The first three catalog cards use `priority` so the opening row is ready with the page. Later cards use `loading="lazy"`. Compare photos use the image optimizer and `priority` as well: a comparison has at most three pictures, and they sit at the top of that page. They are not `unoptimized`, because that would skip resizing and send the original file.
 
-`cacheComponents` prerenders the static shell (layout, header, and fonts) so repeat visits reuse it. Catalog and compare results are not wrapped in `use cache`: both follow the query string, and the car list is already a static module in the server bundle.
+`cacheComponents` prerenders the static shell (layout, header, and font) so repeat visits reuse it. Catalog and compare results are not wrapped in `use cache`: both follow the query string, and the car list is already a static module in the server bundle.
 
 Routes live in `src/app`. Catalog data, filtering, and sorting live in `src/features/catalog`. Comparison selection and the table live in `src/features/comparison`. Shared controls live in `src/shared/ui`.
 

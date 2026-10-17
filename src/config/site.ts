@@ -17,7 +17,17 @@ function siteOrigin(): string {
 export const siteConfig = {
   name: "Car Comparison",
   title: "Car Comparison Dashboard",
-  description: "Compare car prices, brands, weight, ratings, and specifications side by side.",
+  description:
+    "Browse cars by price, brand, model, weight, and rating. Filter by brand, type, and price, then compare up to three cars and their specifications side by side.",
+  category: "Automotive",
+  keywords: [
+    "car comparison",
+    "car prices",
+    "car ratings",
+    "car weight",
+    "car specifications",
+    "car brands",
+  ],
   url: siteOrigin(),
 } as const;
 

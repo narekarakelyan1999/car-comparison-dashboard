@@ -50,27 +50,34 @@ export function catalogResultLabel(
   return formatCarCount(total);
 }
 
+function appliedPriceLabel(filters: CatalogFilters, bounds: PriceBounds): string | null {
+  const minPrice =
+    filters.minPrice !== null && filters.minPrice > bounds.min ? filters.minPrice : null;
+  const maxPrice =
+    filters.maxPrice !== null && filters.maxPrice < bounds.max ? filters.maxPrice : null;
+
+  if (minPrice !== null && maxPrice !== null) {
+    return `${formatPrice(minPrice)}–${formatPrice(maxPrice)}`;
+  }
+
+  if (minPrice !== null) {
+    return `From ${formatPrice(minPrice)}`;
+  }
+
+  if (maxPrice !== null) {
+    return `Up to ${formatPrice(maxPrice)}`;
+  }
+
+  return null;
+}
+
 export function formatAppliedFilters(filters: CatalogFilters, bounds: PriceBounds): string | null {
-  const parts: string[] = [];
-
-  if (filters.brands.length > 0) {
-    parts.push(filters.brands.join(", "));
-  }
-
-  if (filters.types.length > 0) {
-    parts.push(filters.types.map((type) => CAR_TYPE_LABELS[type]).join(", "));
-  }
-
-  const hasMin = filters.minPrice !== null && filters.minPrice > bounds.min;
-  const hasMax = filters.maxPrice !== null && filters.maxPrice < bounds.max;
-
-  if (hasMin && hasMax && filters.minPrice !== null && filters.maxPrice !== null) {
-    parts.push(`${formatPrice(filters.minPrice)}–${formatPrice(filters.maxPrice)}`);
-  } else if (hasMin && filters.minPrice !== null) {
-    parts.push(`From ${formatPrice(filters.minPrice)}`);
-  } else if (hasMax && filters.maxPrice !== null) {
-    parts.push(`Up to ${formatPrice(filters.maxPrice)}`);
-  }
+  const priceLabel = appliedPriceLabel(filters, bounds);
+  const parts = [
+    filters.brands.join(", "),
+    filters.types.map((type) => CAR_TYPE_LABELS[type]).join(", "),
+    priceLabel ?? "",
+  ].filter((part) => part.length > 0);
 
   if (parts.length === 0) {
     return null;

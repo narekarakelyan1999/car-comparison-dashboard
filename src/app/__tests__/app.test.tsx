@@ -1,11 +1,16 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/font/google", () => ({
+  Geist: () => ({ variable: "--font-geist-sans" }),
+}));
 
 import { catalogApi } from "@/features/catalog";
 
 import { siteConfig } from "@/config/site";
 
 import { generateMetadata as compareMetadata } from "../compare/page";
+import { metadata as siteMetadata } from "../layout";
 import NotFound from "../not-found";
 import { generateMetadata as homeMetadata } from "../page";
 import robots from "../robots";
@@ -59,6 +64,14 @@ describe("app routes", () => {
       searchParams: Promise.resolve({ brand: "bmw", sort: "price-asc" }),
     });
 
+    expect(siteMetadata.description).toBe(siteConfig.description);
+    expect(siteMetadata.description?.length).toBeGreaterThanOrEqual(120);
+    expect(siteMetadata.description?.length).toBeLessThanOrEqual(160);
+    expect(siteMetadata.authors).toEqual([{ name: siteConfig.name, url: siteConfig.url }]);
+    expect(siteMetadata.creator).toBe(siteConfig.name);
+    expect(siteMetadata.publisher).toBe(siteConfig.name);
+    expect(siteMetadata.category).toBe(siteConfig.category);
+    expect(siteMetadata.keywords).toEqual([...siteConfig.keywords]);
     expect(home.alternates).toEqual({ canonical: "/" });
     expect(home.robots).toEqual({ index: true, follow: true });
     expect(filtered.robots).toEqual({ index: false, follow: true });
