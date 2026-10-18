@@ -3,7 +3,7 @@ import { Geist } from "next/font/google";
 
 import { ComparisonSelectionProvider } from "@/features/comparison";
 
-import { siteConfig } from "@/config/site";
+import { siteConfig, socialImage } from "@/config/site";
 
 import { SiteHeader } from "./site-header";
 
@@ -34,11 +34,13 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     type: "website",
     locale: "en_US",
+    images: [socialImage],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: siteConfig.title,
     description: siteConfig.description,
+    images: [socialImage.url],
   },
 };
 

@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { formatPrice, type SearchParamRecord } from "@/features/catalog";
 
+import { siteConfig, socialMetadata } from "@/config/site";
+
 import { comparisonApi } from "./api/comparison-api";
 import { comparisonTitle } from "./model/format-comparison";
-import { MIN_COMPARISON_CARS } from "./model/selection";
+import { comparisonCanonicalPath, MIN_COMPARISON_CARS } from "./model/selection";
 import { ComparisonNavigation } from "./ui/comparison-navigation";
 import { ComparisonStage } from "./ui/comparison-stage";
 
@@ -13,25 +16,27 @@ type ComparisonPageProps = {
 };
 
 export function comparisonMetadata(searchParams: SearchParamRecord) {
-  const { cars } = comparisonApi.listFromPage(searchParams);
+  const page = comparisonApi.loadPage(searchParams);
+  const { cars } = page;
+  const canonicalPath = comparisonCanonicalPath(cars.map((car) => car.id));
+  const comparable = cars.length >= MIN_COMPARISON_CARS;
 
-  if (cars.length < MIN_COMPARISON_CARS) {
-    return {
-      title: "Compare cars",
-      robots: { index: false, follow: true },
-    };
-  }
-
-  return {
-    title: comparisonTitle(cars),
-    description: cars
-      .map((car) => `${car.brand} ${car.model} (${formatPrice(car.price)})`)
-      .join(", "),
-  };
+  return socialMetadata({
+    title: comparable ? comparisonTitle(cars) : "Compare cars",
+    description: comparable
+      ? cars.map((car) => `${car.brand} ${car.model} (${formatPrice(car.price)})`).join(", ")
+      : siteConfig.description,
+    canonicalPath,
+    index: page.redirectHref === null && comparable,
+  });
 }
 
 export function ComparisonPage({ searchParams }: ComparisonPageProps) {
   const page = comparisonApi.loadPage(searchParams);
+
+  if (page.redirectHref) {
+    redirect(page.redirectHref);
+  }
 
   return (
     <>
@@ -44,11 +49,7 @@ export function ComparisonPage({ searchParams }: ComparisonPageProps) {
         </Link>
       </p>
       <ComparisonNavigation>
-        <ComparisonStage
-          cars={page.cars}
-          options={page.options}
-          removedMessage={page.removedMessage}
-        />
+        <ComparisonStage cars={page.cars} options={page.options} />
       </ComparisonNavigation>
     </>
   );

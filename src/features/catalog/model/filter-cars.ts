@@ -62,13 +62,8 @@ export function activeFilterCount(filters: CatalogFilters, bounds: PriceBounds):
   return filters.brands.length + filters.types.length + minActive + maxActive;
 }
 
-export function hasActiveFilters(filters: CatalogFilters): boolean {
-  return (
-    filters.brands.length > 0 ||
-    filters.types.length > 0 ||
-    filters.minPrice !== null ||
-    filters.maxPrice !== null
-  );
+export function hasActiveFilters(filters: CatalogFilters, bounds: PriceBounds): boolean {
+  return activeFilterCount(filters, bounds) > 0;
 }
 
 function matchesFilter(car: Car, filters: CatalogFilters, bounds: PriceBounds): boolean {

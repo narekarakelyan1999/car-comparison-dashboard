@@ -3,6 +3,10 @@ import { absoluteUrl } from "@/config/site";
 import type { Car } from "./car";
 import { formatCarTitle } from "./format-car";
 
+export function serializeCatalogJsonLd(source: readonly Car[]): string {
+  return JSON.stringify(buildCarCatalogJsonLd(source)).replaceAll("<", "\\u003c");
+}
+
 export function buildCarCatalogJsonLd(source: readonly Car[]): Record<string, unknown> {
   return {
     "@context": "https://schema.org",

@@ -1,15 +1,22 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/font/google", () => ({
   Geist: () => ({ variable: "--font-geist-sans" }),
 }));
 
+vi.mock("next/navigation", () => ({
+  redirect: (href: string) => {
+    throw new Error(`REDIRECT ${href}`);
+  },
+}));
+
 import { catalogApi } from "@/features/catalog";
 
-import { siteConfig } from "@/config/site";
+import { absoluteUrl, assertDeployableOrigin, siteConfig } from "@/config/site";
 
 import { generateMetadata as compareMetadata } from "../compare/page";
+import ErrorPage from "../error";
 import { metadata as siteMetadata } from "../layout";
 import NotFound from "../not-found";
 import { generateMetadata as homeMetadata } from "../page";
@@ -30,6 +37,26 @@ describe("app routes", () => {
 
     expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to catalog" })).toHaveAttribute("href", "/");
+  });
+
+  it("renders the error page", () => {
+    const retry = vi.fn();
+
+    render(<ErrorPage error={new Error("failed")} retry={retry} />);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(retry).toHaveBeenCalledOnce();
+    expect(screen.getByRole("link", { name: "Back to catalog" })).toHaveAttribute("href", "/");
+  });
+
+  it("rejects a production origin that is localhost or not an absolute URL", () => {
+    expect(() => assertDeployableOrigin("http://localhost:3000", "production")).toThrow(
+      /NEXT_PUBLIC_SITE_URL/,
+    );
+    expect(() => assertDeployableOrigin("example.com", "production")).toThrow(
+      /NEXT_PUBLIC_SITE_URL/,
+    );
+    expect(() => assertDeployableOrigin("https://example.com", "production")).not.toThrow();
+    expect(() => assertDeployableOrigin("http://localhost:3000", "development")).not.toThrow();
   });
 
   it("publishes home and compare metadata, robots, and the sitemap", async () => {
@@ -74,7 +101,43 @@ describe("app routes", () => {
     expect(siteMetadata.keywords).toEqual([...siteConfig.keywords]);
     expect(home.alternates).toEqual({ canonical: "/" });
     expect(home.robots).toEqual({ index: true, follow: true });
+    expect(home.openGraph).toMatchObject({
+      title: siteConfig.title,
+      description: siteConfig.description,
+      url: absoluteUrl("/"),
+    });
+    expect(home.twitter).toMatchObject({
+      card: "summary_large_image",
+      title: siteConfig.title,
+      description: siteConfig.description,
+      images: ["/opengraph-image"],
+    });
+    expect(home.openGraph).toMatchObject({
+      images: [{ url: "/opengraph-image", alt: siteConfig.name }],
+    });
     expect(filtered.robots).toEqual({ index: false, follow: true });
     expect(filtered.alternates).toEqual({ canonical: "/?brand=bmw&sort=price-asc" });
+    expect(filtered.openGraph).toMatchObject({
+      title: siteConfig.title,
+      url: absoluteUrl("/?brand=bmw&sort=price-asc"),
+    });
+
+    const secondPage = await homeMetadata({
+      params: Promise.resolve({}),
+      searchParams: Promise.resolve({ page: "2" }),
+    });
+
+    expect(secondPage.alternates).toEqual({ canonical: "/?page=2" });
+    expect(secondPage.openGraph).toMatchObject({
+      url: absoluteUrl("/?page=2"),
+    });
+
+    const outOfRange = await homeMetadata({
+      params: Promise.resolve({}),
+      searchParams: Promise.resolve({ page: "99" }),
+    });
+
+    expect(outOfRange.robots).toEqual({ index: false, follow: true });
+    expect(outOfRange.alternates).toEqual({ canonical: "/?page=3" });
   });
 });

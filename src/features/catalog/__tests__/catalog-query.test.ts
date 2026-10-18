@@ -4,6 +4,7 @@ import { absoluteUrl } from "@/config/site";
 
 import { catalogApi } from "../api/catalog-api";
 import type { Car } from "../model/car";
+import { serializeCatalogJsonLd } from "../model/catalog-json-ld";
 import { formatCarTitle } from "../model/format-car";
 import {
   catalogFiltersFromDraft,
@@ -130,7 +131,26 @@ describe("catalogApi.loadPage", () => {
 
     expect(tooFar.redirectHref).toBe("/?page=3");
     expect(tooFar.page).toBe(3);
+    expect(tooFar.indexable).toBe(false);
+
+    const explicitFirstPage = catalogApi.loadPage({ page: "1" });
+
+    expect(explicitFirstPage.redirectHref).toBe("/");
+    expect(explicitFirstPage.indexable).toBe(false);
     expect(unknownBrand.redirectHref).toBeNull();
+
+    const belowRange = catalogApi.loadPage({ minPrice: "1" });
+    const aboveRange = catalogApi.loadPage({ maxPrice: "1000000" });
+    const narrowed = catalogApi.loadPage({ minPrice: "30000" });
+
+    expect(belowRange.redirectHref).toBe("/");
+    expect(belowRange.filtersActive).toBe(false);
+    expect(belowRange.indexable).toBe(false);
+    expect(belowRange.summary).toBeNull();
+    expect(aboveRange.redirectHref).toBe("/");
+    expect(aboveRange.filtersActive).toBe(false);
+    expect(narrowed.redirectHref).toBeNull();
+    expect(narrowed.filtersActive).toBe(true);
     expect(unknownBrand.cars).toHaveLength(12);
     expect(catalogApi.catalogHomeHref()).toBe("/");
 
@@ -187,6 +207,23 @@ describe("catalog query links", () => {
 
     expect(filters.minPrice).toBe(25000);
     expect(filters.maxPrice).toBeNull();
+
+    const kept = catalogFiltersFromDraft(
+      { ...emptyCatalogFilters(), minPrice: 30000, maxPrice: 40000 },
+      "12.5",
+      "",
+    );
+
+    expect(kept.minPrice).toBe(30000);
+    expect(kept.maxPrice).toBeNull();
     expect(catalogQueryHref(filters, bounds, 2)).toBe("/?brand=toyota&minPrice=25000&page=2");
+
+    const json = serializeCatalogJsonLd([sampleCar({ model: "Camry <script>" })]);
+
+    expect(json).not.toContain("<");
+    expect(json).toContain("\\u003c");
+    expect(JSON.parse(json)).toMatchObject({
+      itemListElement: [{ item: { name: "2024 Toyota Camry <script>" } }],
+    });
   });
 });

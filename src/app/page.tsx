@@ -1,22 +1,19 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import {
-  carApi,
-  CATALOG_PARAMS,
-  catalogApi,
-  CatalogPage,
-  type SearchParamRecord,
-} from "@/features/catalog";
+import { carApi, catalogApi, CatalogPage, type SearchParamRecord } from "@/features/catalog";
 import { CompareToggle, ComparisonBar } from "@/features/comparison";
+
+import { siteConfig, socialMetadata } from "@/config/site";
 
 export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
   const page = catalogApi.loadPage(await searchParams);
 
-  return {
-    alternates: { canonical: page.canonicalPath },
-    robots: { index: page.indexable, follow: true },
-  };
+  return socialMetadata({
+    description: siteConfig.description,
+    canonicalPath: page.canonicalPath,
+    index: page.indexable,
+  });
 }
 
 export default function HomePage({ searchParams }: PageProps<"/">) {
@@ -43,13 +40,7 @@ async function HomeCatalog({ searchParams }: { searchParams: Promise<SearchParam
       searchParams={params}
       comparison={<ComparisonBar cars={carApi.listCars()} />}
       renderAction={(car) => (
-        <CompareToggle
-          appearance="add"
-          carId={car.id}
-          carName={`${car.brand} ${car.model}`}
-          pathname="/"
-          paramName={CATALOG_PARAMS.compare}
-        />
+        <CompareToggle appearance="add" carId={car.id} carName={`${car.brand} ${car.model}`} />
       )}
     />
   );

@@ -5,6 +5,7 @@ import { Button } from "../button";
 import { ButtonLink } from "../button-link";
 import { buttonClassName } from "../button-styles";
 import { Checkbox } from "../checkbox";
+import { Dialog } from "../dialog";
 import { EmptyState } from "../empty-state";
 import { Select } from "../select";
 import { TextField } from "../text-field";
@@ -63,6 +64,50 @@ describe("shared UI", () => {
     expect(onSelect).toHaveBeenCalled();
     expect(onText).toHaveBeenCalledWith("12");
     expect(onBlur).toHaveBeenCalled();
+  });
+
+  it("places an open dialog at the top and locks page scrolling", () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Dialog title="Add a vehicle" open={false} onClose={onClose}>
+        <p>Pick one</p>
+      </Dialog>,
+    );
+
+    expect(screen.queryByRole("dialog", { name: "Add a vehicle" })).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("");
+
+    rerender(
+      <Dialog title="Add a vehicle" open onClose={onClose}>
+        <p>Pick one</p>
+      </Dialog>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Add a vehicle" });
+    expect(dialog.className).toContain("top-32");
+    expect(dialog.className).toContain("left-1/2");
+    expect(dialog.className).not.toContain("-translate-y-1/2");
+    expect(screen.getByRole("button", { name: "Close" }).className).toContain("text-3xl");
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.style.position).toBe("fixed");
+
+    rerender(
+      <Dialog title="Add a vehicle" open={false} onClose={onClose}>
+        <p>Pick one</p>
+      </Dialog>,
+    );
+
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.style.position).toBe("");
+
+    rerender(
+      <Dialog title="Add a vehicle" open onClose={onClose}>
+        <p>Pick one</p>
+      </Dialog>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("shows an empty state with and without an action", () => {

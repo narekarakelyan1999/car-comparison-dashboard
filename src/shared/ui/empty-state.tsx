@@ -6,6 +6,7 @@ type EmptyStateProps = {
   action?: {
     href: string;
     label: string;
+    replace?: boolean;
   };
 };
 
@@ -16,7 +17,7 @@ function EmptyStateAction({ action }: Pick<EmptyStateProps, "action">) {
 
   return (
     <p className="mt-4">
-      <ButtonLink href={action.href} variant="primary">
+      <ButtonLink href={action.href} variant="primary" replace={action.replace}>
         {action.label}
       </ButtonLink>
     </p>

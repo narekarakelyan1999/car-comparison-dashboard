@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Car } from "@/features/catalog";
 
+import { absoluteUrl, siteConfig } from "@/config/site";
+
 import { comparisonMetadata, ComparisonPage } from "../comparison-page";
 import { CompareToggle } from "../ui/compare-toggle";
-import { ComparisonAddCar } from "../ui/comparison-add-car";
 import { ComparisonBar } from "../ui/comparison-bar";
-import { ComparisonNavigation } from "../ui/comparison-navigation";
 import { ComparisonSelectionProvider } from "../ui/comparison-selection";
 
 const replace = vi.hoisted(() => vi.fn());
@@ -80,6 +80,11 @@ describe("comparison screens", () => {
       "href",
       "/compare?ids=toyota-camry,honda-accord",
     );
+    fireEvent.click(screen.getByRole("link", { name: "Compare" }));
+    expect(
+      screen.getByRole("region", { name: "Selected cars for comparison" }),
+    ).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
 
     rerender(
       <ComparisonSelectionProvider key="three" initialIds={[camry.id, accord.id, mustang.id]}>
@@ -93,54 +98,62 @@ describe("comparison screens", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("adds a car from the comparison page and ignores a full selection", () => {
-    const { rerender } = render(
-      <ComparisonSelectionProvider>
-        <ComparisonNavigation>
-          <ComparisonAddCar
-            cars={[
-              { id: "honda-accord", label: "2024 Honda Accord" },
-              { id: "toyota-camry", label: "2024 Toyota Camry" },
-            ]}
-            selectedIds={["toyota-camry"]}
-          />
-        </ComparisonNavigation>
+  it("clears the catalog selection when the comparison page opens", () => {
+    render(
+      <ComparisonSelectionProvider initialIds={[camry.id, accord.id]}>
+        <ComparisonBar cars={[camry, accord]} />
+        <ComparisonPage searchParams={{ ids: "honda-accord,toyota-camry" }} />
       </ComparisonSelectionProvider>,
     );
 
-    expect(screen.getByText("1 of 3 cars selected.")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Add a car"), { target: { value: "" } });
+    expect(
+      screen.queryByRole("region", { name: "Selected cars for comparison" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a car from the next column and keeps later columns disabled", () => {
+    const { rerender } = render(
+      <ComparisonSelectionProvider>
+        <ComparisonPage searchParams={{ ids: "toyota-camry" }} />
+      </ComparisonSelectionProvider>,
+    );
+
+    const addButtons = screen.getAllByRole("button", { name: /Add a vehicle in column/ });
+    expect(addButtons).toHaveLength(2);
+    expect(addButtons[0]).toBeEnabled();
+    expect(addButtons[1]).toBeDisabled();
+    expect(screen.getByRole("table", { name: "Specification comparison" })).toBeInTheDocument();
+    expect(screen.getByText("2024 Toyota Camry")).toBeInTheDocument();
+
+    fireEvent.click(addButtons[1]);
+    expect(screen.queryByRole("dialog", { name: "Add a vehicle" })).not.toBeInTheDocument();
+
+    fireEvent.click(addButtons[0]);
+    expect(screen.getByRole("dialog", { name: "Add a vehicle" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add vehicle" }));
     expect(replace).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText("Add a car"), { target: { value: "honda-accord" } });
+    fireEvent.change(screen.getByLabelText("Car"), { target: { value: "honda-accord" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add vehicle" }));
     expect(replace).toHaveBeenCalledWith("/compare?ids=toyota-camry%2Chonda-accord", {
       scroll: false,
     });
 
     rerender(
       <ComparisonSelectionProvider>
-        <ComparisonNavigation>
-          <ComparisonAddCar
-            cars={[{ id: "honda-accord", label: "2024 Honda Accord" }]}
-            selectedIds={["a", "b", "c"]}
-          />
-        </ComparisonNavigation>
+        <ComparisonPage searchParams={{ ids: "ford-mustang,honda-accord,toyota-camry" }} />
       </ComparisonSelectionProvider>,
     );
 
-    expect(screen.getByLabelText("Add a car")).toBeDisabled();
-    expect(screen.getByText("Comparison is full")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Add a vehicle in column/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("2024 Ford Mustang")).toBeInTheDocument();
   });
 
   it("adds a catalog car and does nothing when the selection is already full", () => {
     const { rerender } = render(
       <ComparisonSelectionProvider initialIds={["toyota-camry"]}>
-        <CompareToggle
-          appearance="add"
-          carId="honda-accord"
-          carName="Honda Accord"
-          pathname="/"
-          paramName="compare"
-        />
+        <CompareToggle appearance="add" carId="honda-accord" carName="Honda Accord" />
       </ComparisonSelectionProvider>,
     );
 
@@ -150,13 +163,7 @@ describe("comparison screens", () => {
 
     rerender(
       <ComparisonSelectionProvider key="full" initialIds={["a", "b", "c"]}>
-        <CompareToggle
-          appearance="add"
-          carId="ford-mustang"
-          carName="Ford Mustang"
-          pathname="/"
-          paramName="compare"
-        />
+        <CompareToggle appearance="add" carId="ford-mustang" carName="Ford Mustang" />
       </ComparisonSelectionProvider>,
     );
 
@@ -171,39 +178,66 @@ describe("comparison screens", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Compare cars" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Select at least two cars" })).toBeInTheDocument();
+    const emptySlots = screen.getAllByRole("button", { name: /Add a vehicle in column/ });
+    expect(emptySlots).toHaveLength(3);
+    expect(emptySlots[0]).toBeEnabled();
+    expect(emptySlots[1]).toBeDisabled();
+    expect(emptySlots[2]).toBeDisabled();
+    expect(screen.getByRole("table", { name: "Specification comparison" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Browse cars" })).not.toBeInTheDocument();
+
+    expect(() =>
+      render(
+        <ComparisonSelectionProvider>
+          <ComparisonPage searchParams={{ ids: "nope,toyota-camry" }} />
+        </ComparisonSelectionProvider>,
+      ),
+    ).toThrow("REDIRECT /compare?ids=toyota-camry");
 
     rerender(
       <ComparisonSelectionProvider>
-        <ComparisonPage searchParams={{ ids: "nope,toyota-camry" }} />
-      </ComparisonSelectionProvider>,
-    );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "1 selected car was removed because it is not in the catalog.",
-    );
-    expect(screen.getByRole("heading", { name: "Compare cars" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Select at least two cars" })).toBeInTheDocument();
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
-
-    rerender(
-      <ComparisonSelectionProvider>
-        <ComparisonPage searchParams={{ ids: "toyota-camry,honda-accord" }} />
+        <ComparisonPage searchParams={{ ids: "honda-accord,toyota-camry" }} />
       </ComparisonSelectionProvider>,
     );
     expect(
-      screen.getByRole("heading", { name: "Compare Toyota Camry vs Honda Accord" }),
+      screen.getByRole("heading", { name: "Compare Honda Accord vs Toyota Camry" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Add a car")).toBeEnabled();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Add a vehicle in column/ })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Toyota Camry" }));
+    expect(replace).toHaveBeenCalledWith("/compare?ids=honda-accord", { scroll: false });
   });
 
   it("asks search engines to skip a comparison of fewer than two cars", () => {
+    const canonicalPath = "/compare?ids=honda-accord,toyota-camry";
+
     expect(comparisonMetadata({ ids: "toyota-camry" })).toMatchObject({
       title: "Compare cars",
       robots: { index: false, follow: true },
+      alternates: { canonical: "/compare?ids=toyota-camry" },
+      openGraph: {
+        title: `Compare cars | ${siteConfig.name}`,
+        url: absoluteUrl("/compare?ids=toyota-camry"),
+      },
     });
-    expect(comparisonMetadata({ ids: "toyota-camry,honda-accord" }).title).toBe(
-      "Compare Toyota Camry vs Honda Accord",
-    );
+    expect(comparisonMetadata({ ids: "toyota-camry,honda-accord" })).toMatchObject({
+      robots: { index: false, follow: true },
+      alternates: { canonical: canonicalPath },
+    });
+    expect(comparisonMetadata({ ids: "honda-accord,toyota-camry" })).toMatchObject({
+      title: "Compare Honda Accord vs Toyota Camry",
+      robots: { index: true, follow: true },
+      alternates: { canonical: canonicalPath },
+      openGraph: {
+        title: `Compare Honda Accord vs Toyota Camry | ${siteConfig.name}`,
+        description: "Honda Accord ($29,100), Toyota Camry ($28,400)",
+        url: absoluteUrl(canonicalPath),
+        images: [{ url: "/opengraph-image" }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `Compare Honda Accord vs Toyota Camry | ${siteConfig.name}`,
+      },
+    });
   });
 });

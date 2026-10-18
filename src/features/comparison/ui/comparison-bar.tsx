@@ -2,8 +2,7 @@
 
 import { ButtonLink } from "@/shared/ui";
 
-import type { Car } from "@/features/catalog";
-import { CATALOG_PARAMS, formatCarCount } from "@/features/catalog";
+import { type Car, formatCarCount } from "@/features/catalog";
 
 import { compareHref, MAX_COMPARISON_CARS, MIN_COMPARISON_CARS } from "../model/selection";
 
@@ -79,8 +78,6 @@ export function ComparisonBar({ cars }: ComparisonBarProps) {
                 <CompareToggle
                   carId={car.id}
                   carName={`${car.brand} ${car.model}`}
-                  pathname="/"
-                  paramName={CATALOG_PARAMS.compare}
                   appearance="chip"
                 />
               </li>

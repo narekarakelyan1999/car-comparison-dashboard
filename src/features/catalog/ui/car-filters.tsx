@@ -27,6 +27,12 @@ function useDraftPrice(serverValue: string): readonly [string, (value: string) =
   return [value, setValue];
 }
 
+function acceptWholePrice(value: string, setPrice: (next: string) => void): void {
+  if (value === "" || /^\d+$/.test(value)) {
+    setPrice(value);
+  }
+}
+
 function filterStatusLabel(activeCount: number, filtersOpen: boolean): string {
   if (activeCount > 0) {
     return `${activeCount} applied`;
@@ -114,7 +120,7 @@ export function CarFilters({ brands, types }: CarFiltersProps) {
                 max={bounds.max}
                 step={1}
                 value={minPrice}
-                onChange={setMinPrice}
+                onChange={(value) => acceptWholePrice(value, setMinPrice)}
                 onBlur={() => applyFilters()}
               />
               <TextField
@@ -126,7 +132,7 @@ export function CarFilters({ brands, types }: CarFiltersProps) {
                 max={bounds.max}
                 step={1}
                 value={maxPrice}
-                onChange={setMaxPrice}
+                onChange={(value) => acceptWholePrice(value, setMaxPrice)}
                 onBlur={() => applyFilters()}
               />
             </div>

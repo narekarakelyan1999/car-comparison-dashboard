@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 
 import { toggleComparisonId } from "../model/selection";
 
 type ComparisonSelection = {
   ids: readonly string[];
   toggle: (carId: string) => void;
-  replace: (nextIds: readonly string[]) => void;
+  clear: () => void;
 };
 
 const ComparisonSelectionContext = createContext<ComparisonSelection | null>(null);
@@ -22,17 +22,16 @@ export function ComparisonSelectionProvider({
   initialIds = [],
 }: ComparisonSelectionProviderProps) {
   const [ids, setIds] = useState<readonly string[]>(initialIds);
+  const clear = useCallback(() => {
+    setIds([]);
+  }, []);
 
   function toggle(carId: string) {
     setIds((current) => toggleComparisonId(current, carId));
   }
 
-  function replace(nextIds: readonly string[]) {
-    setIds(nextIds);
-  }
-
   return (
-    <ComparisonSelectionContext.Provider value={{ ids, toggle, replace }}>
+    <ComparisonSelectionContext.Provider value={{ ids, toggle, clear }}>
       {children}
     </ComparisonSelectionContext.Provider>
   );

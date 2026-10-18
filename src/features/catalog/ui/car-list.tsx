@@ -20,7 +20,7 @@ export function CarList({ cars, clearFiltersHref, renderAction }: CarListProps) 
       <EmptyState
         title="No cars match these filters"
         description="Clear the filters to see the full catalog."
-        action={{ href: clearFiltersHref, label: "Clear filters" }}
+        action={{ href: clearFiltersHref, label: "Clear filters", replace: true }}
       />
     );
   }

@@ -91,14 +91,6 @@ export function formatComparisonValue(car: Car, key: ComparisonRowKey): string {
   }
 }
 
-export function formatRemovedCarCount(count: number): string {
-  if (count === 1) {
-    return "1 selected car was removed because it is not in the catalog.";
-  }
-
-  return `${count} selected cars were removed because they are not in the catalog.`;
-}
-
 export function comparisonTitle(cars: readonly Car[]): string {
   if (cars.length < MIN_COMPARISON_CARS) {
     return "Compare cars";

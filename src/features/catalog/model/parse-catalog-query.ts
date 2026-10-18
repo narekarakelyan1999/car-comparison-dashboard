@@ -9,7 +9,6 @@ export const CATALOG_PARAMS = {
   maxPrice: "maxPrice",
   sort: "sort",
   page: "page",
-  compare: "compare",
 } as const;
 
 export type SearchParamRecord = Record<string, string | string[] | undefined>;
@@ -103,6 +102,14 @@ export function emptyCatalogFilters(): CatalogFilters {
   };
 }
 
+function priceFromDraft(draft: string, current: number | null): number | null {
+  if (draft.trim() === "") {
+    return null;
+  }
+
+  return parsePriceInput(draft) ?? current;
+}
+
 export function catalogFiltersFromDraft(
   filters: CatalogFilters,
   minPrice: string,
@@ -112,8 +119,8 @@ export function catalogFiltersFromDraft(
   return {
     brands: filters.brands,
     types: filters.types,
-    minPrice: parsePriceInput(minPrice),
-    maxPrice: parsePriceInput(maxPrice),
+    minPrice: priceFromDraft(minPrice, filters.minPrice),
+    maxPrice: priceFromDraft(maxPrice, filters.maxPrice),
     sort: filters.sort,
     ...patch,
   };

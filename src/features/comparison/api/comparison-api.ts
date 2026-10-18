@@ -1,18 +1,15 @@
-import {
-  type Car,
-  carApi,
-  catalogApi,
-  firstParam,
-  type SearchParamRecord,
-} from "@/features/catalog";
+import { carApi } from "@/features/catalog/api/car-api";
+import { catalogApi } from "@/features/catalog/api/catalog-api";
+import type { Car } from "@/features/catalog/model/car";
+import { firstParam, type SearchParamRecord } from "@/features/catalog/model/parse-catalog-query";
 
-import {
-  comparisonCarOptions,
-  comparisonTitle,
-  formatRemovedCarCount,
-} from "../model/format-comparison";
+import { comparisonCarOptions, comparisonTitle } from "../model/format-comparison";
 import { parseCompareIds } from "../model/parse-compare-ids";
-import { COMPARE_PAGE_PARAM, MAX_COMPARISON_CARS } from "../model/selection";
+import {
+  COMPARE_PAGE_PARAM,
+  comparisonCanonicalPath,
+  MAX_COMPARISON_CARS,
+} from "../model/selection";
 
 export type ComparisonResult = {
   cars: Car[];
@@ -38,7 +35,7 @@ function resolveIds(ids: readonly string[]): ComparisonResult {
 
 export type ComparisonScreen = ComparisonResult & {
   title: string;
-  removedMessage: string | null;
+  redirectHref: string | null;
   backHref: string;
   options: { id: string; label: string }[];
 };
@@ -57,14 +54,15 @@ export const comparisonApi: ComparisonApi = {
 
   loadPage(params) {
     const comparison = this.listFromPage(params);
+    const canonicalPath = comparisonCanonicalPath(comparison.cars.map((car) => car.id));
+    const canonicalIds =
+      canonicalPath === "/compare" ? undefined : canonicalPath.slice("/compare?ids=".length);
+    const requestedIds = firstParam(params[COMPARE_PAGE_PARAM]);
 
     return {
       ...comparison,
       title: comparisonTitle(comparison.cars),
-      removedMessage:
-        comparison.unknownIds.length === 0
-          ? null
-          : formatRemovedCarCount(comparison.unknownIds.length),
+      redirectHref: requestedIds === canonicalIds ? null : canonicalPath,
       backHref: catalogApi.catalogHomeHref(),
       options: comparisonCarOptions(carApi.listCars()),
     };

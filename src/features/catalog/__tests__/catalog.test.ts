@@ -191,8 +191,14 @@ describe("filter helpers", () => {
     };
 
     expect(activeFilterCount(filters, bounds)).toBe(3);
-    expect(hasActiveFilters(filters)).toBe(true);
-    expect(hasActiveFilters(emptyCatalogFilters())).toBe(false);
+    expect(hasActiveFilters(filters, bounds)).toBe(true);
+    expect(hasActiveFilters(emptyCatalogFilters(), bounds)).toBe(false);
+    expect(
+      hasActiveFilters(
+        { ...emptyCatalogFilters(), minPrice: bounds.min, maxPrice: bounds.max },
+        bounds,
+      ),
+    ).toBe(false);
   });
 
   it("uses zero bounds when the catalog is empty", () => {

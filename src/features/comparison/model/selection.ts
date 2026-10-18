@@ -72,3 +72,7 @@ export function compareHref(ids: readonly string[]): string {
 
   return `/compare?${COMPARE_PAGE_PARAM}=${ids.join(",")}`;
 }
+
+export function comparisonCanonicalPath(ids: readonly string[]): string {
+  return compareHref([...ids].sort((left, right) => left.localeCompare(right)));
+}

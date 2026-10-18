@@ -55,6 +55,24 @@ describe("catalog screens", () => {
     });
   });
 
+  it("keeps a committed price when the next draft is not a whole number", () => {
+    render(
+      <CatalogNavigation
+        filters={{ ...emptyCatalogFilters(), minPrice: 30000 }}
+        bounds={bounds}
+        page={1}
+      >
+        <CarFilters brands={["Toyota"]} types={["sedan"]} />
+      </CatalogNavigation>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Minimum price"), { target: { value: "30000.5" } });
+    fireEvent.blur(screen.getByLabelText("Minimum price"));
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Minimum price")).toHaveValue(30000);
+  });
+
   it("leaves the catalog in place when clear or price blur does not change the URL", () => {
     render(
       <CatalogNavigation filters={emptyCatalogFilters()} bounds={bounds} page={2}>
@@ -101,6 +119,7 @@ describe("catalog screens", () => {
     expect(
       screen.getByRole("heading", { name: "No cars match these filters" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute("href", "/");
 
     rerender(
       <ComparisonSelectionProvider>

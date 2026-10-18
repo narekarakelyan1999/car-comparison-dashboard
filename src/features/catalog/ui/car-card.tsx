@@ -31,7 +31,7 @@ export function CarCard({ car, priority = false, children }: CarCardProps) {
           src={car.imageSrc}
           alt={car.imageAlt}
           fill
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes="(min-width: 1024px) 17rem, (min-width: 640px) 30rem, calc(100vw - 2rem)"
           className="object-contain p-3"
           {...imageProps}
         />

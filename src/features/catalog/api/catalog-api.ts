@@ -1,5 +1,5 @@
 import type { Car, CarType } from "../model/car";
-import { buildCarCatalogJsonLd } from "../model/catalog-json-ld";
+import { serializeCatalogJsonLd } from "../model/catalog-json-ld";
 import {
   type CatalogFilters,
   filterCars,
@@ -47,6 +47,14 @@ function catalogHomeHref(bounds: PriceBounds): string {
   return catalogHref(serializeCatalogQuery(emptyCatalogFilters(), bounds));
 }
 
+function requestedPriceMatches(params: SearchParamRecord, canonicalQuery: string): boolean {
+  const canonical = new URLSearchParams(canonicalQuery);
+
+  return [CATALOG_PARAMS.minPrice, CATALOG_PARAMS.maxPrice].every((key) => {
+    return (firstParam(params[key]) ?? "") === (canonical.get(key) ?? "");
+  });
+}
+
 export type CatalogApi = {
   loadPage(params: SearchParamRecord): CatalogScreen;
   catalogHomeHref(): string;
@@ -63,14 +71,16 @@ export const catalogApi: CatalogApi = {
     );
     const requestedPage = firstParam(params[CATALOG_PARAMS.page]);
     const canonicalPage = result.page > 1 ? String(result.page) : undefined;
-    const filtersActive = hasActiveFilters(filters);
-    const canonicalPath = catalogHref(serializeCatalogQuery(filters, bounds, result.page));
+    const canonicalQuery = serializeCatalogQuery(filters, bounds, result.page);
+    const canonicalPath = catalogHref(canonicalQuery);
+    const filtersActive = hasActiveFilters(filters, bounds);
+    const redirectHref =
+      requestedPage !== canonicalPage || !requestedPriceMatches(params, canonicalQuery)
+        ? canonicalPath
+        : null;
 
     return {
-      redirectHref:
-        requestedPage === canonicalPage
-          ? null
-          : catalogHref(serializeCatalogQuery(filters, bounds, result.page)),
+      redirectHref,
       filters,
       bounds,
       brands: listBrands(all),
@@ -87,9 +97,9 @@ export const catalogApi: CatalogApi = {
       summary: formatAppliedFilters(filters, bounds),
       clearHref: catalogHomeHref(bounds),
       filtersActive,
-      indexable: !filtersActive && filters.sort === DEFAULT_SORT_ID,
+      indexable: redirectHref === null && !filtersActive && filters.sort === DEFAULT_SORT_ID,
       canonicalPath,
-      jsonLd: result.cars.length === 0 ? null : JSON.stringify(buildCarCatalogJsonLd(result.cars)),
+      jsonLd: result.cars.length === 0 ? null : serializeCatalogJsonLd(result.cars),
     };
   },
 

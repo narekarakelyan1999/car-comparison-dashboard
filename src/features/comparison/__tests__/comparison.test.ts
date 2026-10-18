@@ -7,12 +7,12 @@ import {
   comparisonCarOptions,
   comparisonTitle,
   formatComparisonValue,
-  formatRemovedCarCount,
 } from "../model/format-comparison";
 import { getHighlightedCarIds, highlightedIdsFor } from "../model/highlight-cars";
 import { parseCompareIds } from "../model/parse-compare-ids";
 import {
   compareHref,
+  comparisonCanonicalPath,
   isSelectionDisabled,
   MAX_COMPARISON_CARS,
   nextSelectionHref,
@@ -61,27 +61,25 @@ describe("comparison selection", () => {
     expect(isSelectionDisabled(full, "a")).toBe(false);
   });
 
-  it("builds the compare link and the next catalog link from known cars only", () => {
+  it("builds the compare link and the next comparison URL from the current cars", () => {
     expect(compareHref([])).toBe("/compare");
     expect(compareHref(["toyota-camry", "bmw-i4"])).toBe("/compare?ids=toyota-camry,bmw-i4");
+    expect(comparisonCanonicalPath(["toyota-camry", "bmw-i4"])).toBe(
+      "/compare?ids=bmw-i4,toyota-camry",
+    );
+    expect(comparisonCanonicalPath([])).toBe("/compare");
+    expect(nextSelectionHref("/compare", "ids", "ids=fake1,fake2", "toyota-camry", [])).toBe(
+      "/compare?ids=toyota-camry",
+    );
+    expect(nextSelectionHref("/compare", "ids", "ids=a,b,c", "d", ["a", "b", "c"])).toBeNull();
     expect(
-      nextSelectionHref(
-        "/",
-        "compare",
-        "compare=fake1,fake2,fake3&brand=toyota",
-        "toyota-camry",
-        [],
-      ),
-    ).toBe("/?compare=toyota-camry&brand=toyota");
-    expect(nextSelectionHref("/", "compare", "compare=a,b,c", "d", ["a", "b", "c"])).toBeNull();
+      nextSelectionHref("/compare", "ids", "ids=toyota-camry", "toyota-camry", ["toyota-camry"]),
+    ).toBe("/compare");
     expect(
-      nextSelectionHref("/", "compare", "compare=toyota-camry", "toyota-camry", ["toyota-camry"]),
-    ).toBe("/");
-    expect(
-      nextSelectionHref("/", "compare", "compare=toyota-camry&brand=toyota", "toyota-camry", [
+      nextSelectionHref("/compare", "ids", "ids=toyota-camry&brand=toyota", "toyota-camry", [
         "toyota-camry",
       ]),
-    ).toBe("/?brand=toyota");
+    ).toBe("/compare?brand=toyota");
   });
 
   it("keeps known cars and reports ids that are not in the catalog", () => {
@@ -89,6 +87,13 @@ describe("comparison selection", () => {
 
     expect(result.cars.map((car) => car.id)).toEqual(["toyota-camry"]);
     expect(result.unknownIds).toEqual(["nope"]);
+    expect(comparisonApi.loadPage({ ids: "nope,toyota-camry" }).redirectHref).toBe(
+      "/compare?ids=toyota-camry",
+    );
+    expect(comparisonApi.loadPage({ ids: "honda-accord,toyota-camry" }).redirectHref).toBeNull();
+    expect(
+      comparisonApi.loadPage({ ids: "toyota-camry,honda-accord,bmw-i4,ford-mustang" }).redirectHref,
+    ).toBe("/compare?ids=bmw-i4,honda-accord,toyota-camry");
   });
 });
 
@@ -125,16 +130,10 @@ describe("formatComparisonValue", () => {
     expect(formatComparisonValue(car, "transmission")).toBe("Automatic");
   });
 
-  it("names removed cars and sorts the add-car options", () => {
+  it("names a comparison and sorts the add-car options", () => {
     const first = sampleCar({ id: "b", brand: "BMW", model: "X5", year: 2024 });
     const second = sampleCar({ id: "a", brand: "Honda", model: "Civic", year: 2023 });
 
-    expect(formatRemovedCarCount(1)).toBe(
-      "1 selected car was removed because it is not in the catalog.",
-    );
-    expect(formatRemovedCarCount(2)).toBe(
-      "2 selected cars were removed because they are not in the catalog.",
-    );
     expect(comparisonTitle([])).toBe("Compare cars");
     expect(comparisonTitle([first, second])).toBe("Compare BMW X5 vs Honda Civic");
     expect(comparisonCarOptions([first, second]).map((option) => option.id)).toEqual(["a", "b"]);
