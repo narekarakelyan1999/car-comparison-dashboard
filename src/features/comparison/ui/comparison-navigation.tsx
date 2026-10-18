@@ -37,7 +37,7 @@ export function ComparisonPending({ children }: { children: ReactNode }) {
   const { isPending } = useComparisonNavigation();
 
   return (
-    <div aria-busy={isPending} className={isPending ? "opacity-60" : undefined}>
+    <div aria-busy={isPending} className={isPending ? "min-w-0 opacity-60" : "min-w-0"}>
       {isPending ? <p className="sr-only">Updating comparison</p> : null}
       {children}
     </div>

@@ -20,7 +20,7 @@ function ComparisonColumn({ car, onRemove }: { car: Car; onRemove: (carId: strin
       className="h-px border-l border-slate-200 px-2 py-3 align-top first:border-l-0 sm:px-4 sm:py-4"
     >
       <div className="flex h-full flex-col">
-        <div className="relative mx-auto aspect-2/1 w-full max-w-sm overflow-hidden rounded-lg bg-slate-100">
+        <div className="relative aspect-2/1 w-full min-w-0 overflow-hidden rounded-lg bg-slate-100">
           <Image
             src={car.imageSrc}
             alt={car.imageAlt}
@@ -97,55 +97,57 @@ export function ComparisonTable({ cars, onRemove, onAdd }: ComparisonTableProps)
   const rowSpan = showSpecs ? rows.length * 2 + 1 : 1;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[48rem] table-fixed border-collapse text-left">
-        <caption className="sr-only">Specification comparison</caption>
-        <tbody>
-          <tr className={showSpecs ? undefined : "h-64"}>
-            {cars.map((car) => (
-              <ComparisonColumn key={car.id} car={car} onRemove={onRemove} />
-            ))}
-            <ComparisonAddSlots count={emptyCount} rowSpan={rowSpan} onAdd={onAdd} />
-          </tr>
-          {showSpecs
-            ? rows.map((row) => (
-                <Fragment key={row.key}>
-                  <tr className="border-t border-slate-200 bg-slate-50">
-                    <th
-                      id={`compare-row-${row.key}`}
-                      colSpan={cars.length}
-                      scope="colgroup"
-                      className="px-2 py-2 text-left text-xs font-medium tracking-wide text-slate-600 uppercase sm:px-4"
-                    >
-                      {row.label}
-                    </th>
-                  </tr>
-                  <tr>
-                    {row.cells.map((cell) => (
-                      <td
-                        key={cell.carId}
-                        headers={`compare-row-${row.key} compare-car-${cell.carId}`}
-                        className={`border-l border-slate-200 px-2 py-3 align-middle text-sm first:border-l-0 sm:px-4 ${cell.isBest ? "bg-blue-50" : ""}`}
+    <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className="w-[max(100%,48rem)] [transform:translateZ(0)]">
+        <table className="w-full table-fixed border-collapse text-left">
+          <caption className="sr-only">Specification comparison</caption>
+          <tbody>
+            <tr className={showSpecs ? undefined : "h-64"}>
+              {cars.map((car) => (
+                <ComparisonColumn key={car.id} car={car} onRemove={onRemove} />
+              ))}
+              <ComparisonAddSlots count={emptyCount} rowSpan={rowSpan} onAdd={onAdd} />
+            </tr>
+            {showSpecs
+              ? rows.map((row) => (
+                  <Fragment key={row.key}>
+                    <tr className="border-t border-slate-200 bg-slate-50">
+                      <th
+                        id={`compare-row-${row.key}`}
+                        colSpan={cars.length}
+                        scope="colgroup"
+                        className="px-2 py-2 text-left text-xs font-medium tracking-wide text-slate-600 uppercase sm:px-4"
                       >
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium text-slate-900">{cell.value}</span>
-                          {cell.isBest && row.phrase ? (
-                            <>
-                              <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                                Best
-                              </span>
-                              <span className="sr-only"> {row.phrase}</span>
-                            </>
-                          ) : null}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                </Fragment>
-              ))
-            : null}
-        </tbody>
-      </table>
+                        {row.label}
+                      </th>
+                    </tr>
+                    <tr>
+                      {row.cells.map((cell) => (
+                        <td
+                          key={cell.carId}
+                          headers={`compare-row-${row.key} compare-car-${cell.carId}`}
+                          className={`border-l border-slate-200 px-2 py-3 align-middle text-sm first:border-l-0 sm:px-4 ${cell.isBest ? "bg-blue-50" : ""}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="font-medium text-slate-900">{cell.value}</span>
+                            {cell.isBest && row.phrase ? (
+                              <>
+                                <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                  Best
+                                </span>
+                                <span className="sr-only"> {row.phrase}</span>
+                              </>
+                            ) : null}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  </Fragment>
+                ))
+              : null}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

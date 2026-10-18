@@ -55,10 +55,10 @@ export function ComparisonStage({ cars, options }: ComparisonStageProps) {
 
   return (
     <>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance text-slate-900 sm:text-3xl">
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
         {comparisonTitle(optimisticCars)}
       </h1>
-      <div className="mt-6">
+      <div className="mt-6 min-w-0">
         <ComparisonPending>
           <ComparisonTable
             cars={optimisticCars}
