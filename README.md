@@ -34,10 +34,8 @@ pnpm start        # serve the production build
 
 ## Routes
 
-| URL                                | Page                                                                                                                                                                                                                                                                            |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                | Catalog. Filter by brand, type, and price, then sort and paginate.                                                                                                                                                                                                              |
-| `/compare?ids=toyota-camry,bmw-i4` | Side-by-side comparison in three columns. A car’s details show as soon as it is added. An empty column opens a dialog to add a catalog car. Only the next empty column is active; later columns stay disabled. Two cars are required before the catalog shows the Compare link. |
+- `/` is the catalog. Filter by brand, type, and price, then sort and paginate.
+- `/compare?ids=toyota-camry,bmw-i4` is the side-by-side comparison in three columns. A car’s details show as soon as it is added. An empty column opens a dialog to add a catalog car. Only the next empty column is active; later columns stay disabled. Two cars are required before the catalog shows the Compare link.
 
 Catalog query parameters are `brand`, `type`, `minPrice`, `maxPrice`, `sort`, and `page`. Page 1 and the default sort are omitted from the URL. An out-of-range page redirects to the nearest real page. The catalog URL does not store the cars selected for comparison.
 

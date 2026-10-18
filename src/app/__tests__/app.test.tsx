@@ -40,11 +40,11 @@ describe("app routes", () => {
   });
 
   it("renders the error page", () => {
-    const retry = vi.fn();
+    const reset = vi.fn();
 
-    render(<ErrorPage error={new Error("failed")} retry={retry} />);
+    render(<ErrorPage error={new Error("failed")} reset={reset} />);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(retry).toHaveBeenCalledOnce();
+    expect(reset).toHaveBeenCalledOnce();
     expect(screen.getByRole("link", { name: "Back to catalog" })).toHaveAttribute("href", "/");
   });
 

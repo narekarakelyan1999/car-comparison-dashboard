@@ -18,7 +18,7 @@ const appearanceClassName: Record<CompareAppearance, string> = {
 };
 
 const pressClassName =
-  "cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 has-[:disabled]:cursor-not-allowed has-[:disabled]:active:scale-100";
+  "cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 has-[:disabled]:cursor-not-allowed has-[:disabled]:active:scale-100 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-blue-700";
 
 function toggleLabel(appearance: CompareAppearance, selected: boolean, carName: string): string {
   if (appearance === "chip") {

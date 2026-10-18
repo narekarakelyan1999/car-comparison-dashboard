@@ -90,10 +90,11 @@ describe("comparison selection", () => {
     expect(comparisonApi.loadPage({ ids: "nope,toyota-camry" }).redirectHref).toBe(
       "/compare?ids=toyota-camry",
     );
+    expect(comparisonApi.loadPage({ ids: "toyota-camry,honda-accord" }).redirectHref).toBeNull();
     expect(comparisonApi.loadPage({ ids: "honda-accord,toyota-camry" }).redirectHref).toBeNull();
     expect(
       comparisonApi.loadPage({ ids: "toyota-camry,honda-accord,bmw-i4,ford-mustang" }).redirectHref,
-    ).toBe("/compare?ids=bmw-i4,honda-accord,toyota-camry");
+    ).toBe("/compare?ids=toyota-camry,honda-accord,bmw-i4");
   });
 });
 

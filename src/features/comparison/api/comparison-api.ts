@@ -5,11 +5,7 @@ import { firstParam, type SearchParamRecord } from "@/features/catalog/model/par
 
 import { comparisonCarOptions, comparisonTitle } from "../model/format-comparison";
 import { parseCompareIds } from "../model/parse-compare-ids";
-import {
-  COMPARE_PAGE_PARAM,
-  comparisonCanonicalPath,
-  MAX_COMPARISON_CARS,
-} from "../model/selection";
+import { COMPARE_PAGE_PARAM, compareHref, MAX_COMPARISON_CARS } from "../model/selection";
 
 export type ComparisonResult = {
   cars: Car[];
@@ -54,15 +50,15 @@ export const comparisonApi: ComparisonApi = {
 
   loadPage(params) {
     const comparison = this.listFromPage(params);
-    const canonicalPath = comparisonCanonicalPath(comparison.cars.map((car) => car.id));
-    const canonicalIds =
-      canonicalPath === "/compare" ? undefined : canonicalPath.slice("/compare?ids=".length);
+    const orderedIds =
+      comparison.cars.length === 0 ? undefined : comparison.cars.map((car) => car.id).join(",");
     const requestedIds = firstParam(params[COMPARE_PAGE_PARAM]);
 
     return {
       ...comparison,
       title: comparisonTitle(comparison.cars),
-      redirectHref: requestedIds === canonicalIds ? null : canonicalPath,
+      redirectHref:
+        requestedIds === orderedIds ? null : compareHref(comparison.cars.map((car) => car.id)),
       backHref: catalogApi.catalogHomeHref(),
       options: comparisonCarOptions(carApi.listCars()),
     };

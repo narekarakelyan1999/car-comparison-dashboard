@@ -157,6 +157,9 @@ describe("comparison screens", () => {
       </ComparisonSelectionProvider>,
     );
 
+    expect(
+      screen.getByRole("checkbox", { name: "Add Honda Accord to compare" }).closest("label"),
+    ).toHaveClass("has-[:focus-visible]:outline-2");
     fireEvent.click(screen.getByRole("checkbox", { name: "Add Honda Accord to compare" }));
     expect(screen.getByRole("checkbox", { name: "Added Honda Accord" })).toBeChecked();
     expect(replace).not.toHaveBeenCalled();
@@ -221,8 +224,14 @@ describe("comparison screens", () => {
       },
     });
     expect(comparisonMetadata({ ids: "toyota-camry,honda-accord" })).toMatchObject({
-      robots: { index: false, follow: true },
+      title: "Compare Toyota Camry vs Honda Accord",
+      robots: { index: true, follow: true },
       alternates: { canonical: canonicalPath },
+      openGraph: {
+        title: `Compare Toyota Camry vs Honda Accord | ${siteConfig.name}`,
+        description: "Toyota Camry ($28,400), Honda Accord ($29,100)",
+        url: absoluteUrl(canonicalPath),
+      },
     });
     expect(comparisonMetadata({ ids: "honda-accord,toyota-camry" })).toMatchObject({
       title: "Compare Honda Accord vs Toyota Camry",

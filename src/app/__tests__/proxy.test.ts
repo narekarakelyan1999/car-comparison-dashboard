@@ -16,8 +16,9 @@ describe("catalog proxy", () => {
     const belowRange = responseFor("/?minPrice=1");
     const tooFarPage = responseFor("/?page=99");
     const compare = responseFor("/compare?ids=toyota-camry,honda-accord");
-    const canonicalCompare = responseFor("/compare?ids=honda-accord,toyota-camry");
+    const otherOrder = responseFor("/compare?ids=honda-accord,toyota-camry");
     const unknownCompare = responseFor("/compare?ids=toyota-camry,not-a-car");
+    const extraCompare = responseFor("/compare?ids=toyota-camry,honda-accord,bmw-i4,ford-mustang");
 
     expect(firstPage.status).toBe(307);
     expect(firstPage.headers.get("location")).toBe("http://localhost:3000/");
@@ -29,14 +30,17 @@ describe("catalog proxy", () => {
     expect(belowRange.headers.get("location")).toBe("http://localhost:3000/");
     expect(tooFarPage.status).toBe(307);
     expect(tooFarPage.headers.get("location")).toBe("http://localhost:3000/?page=3");
-    expect(compare.status).toBe(307);
-    expect(compare.headers.get("location")).toBe(
-      "http://localhost:3000/compare?ids=honda-accord,toyota-camry",
-    );
-    expect(canonicalCompare.status).toBe(200);
+    expect(compare.status).toBe(200);
+    expect(compare.headers.get("location")).toBeNull();
+    expect(otherOrder.status).toBe(200);
+    expect(otherOrder.headers.get("location")).toBeNull();
     expect(unknownCompare.status).toBe(307);
     expect(unknownCompare.headers.get("location")).toBe(
       "http://localhost:3000/compare?ids=toyota-camry",
+    );
+    expect(extraCompare.status).toBe(307);
+    expect(extraCompare.headers.get("location")).toBe(
+      "http://localhost:3000/compare?ids=toyota-camry,honda-accord,bmw-i4",
     );
   });
 });
