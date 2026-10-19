@@ -1,19 +1,17 @@
-import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import { carApi } from "./api/car-api";
 import { catalogApi } from "./api/catalog-api";
-import type { Car } from "./model/car";
 import type { SearchParamRecord } from "./model/parse-catalog-query";
 import { CatalogClearLink, CatalogNavigation, CatalogPending } from "./provider/catalog-navigation";
+import { ComparisonBar } from "./ui/comparison-bar";
 import { CarFilters, CarList, CarSort, CatalogPagination } from "./ui";
 
 type CatalogPageProps = {
   searchParams: SearchParamRecord;
-  renderAction: (car: Car) => ReactNode;
-  comparison: ReactNode;
 };
 
-export function CatalogPage({ searchParams, renderAction, comparison }: CatalogPageProps) {
+export function CatalogPage({ searchParams }: CatalogPageProps) {
   const catalog = catalogApi.loadPage(searchParams);
 
   if (catalog.redirectHref) {
@@ -49,18 +47,14 @@ export function CatalogPage({ searchParams, renderAction, comparison }: CatalogP
             ) : null}
             <div className="mt-4">
               <CatalogPending>
-                <CarList
-                  cars={catalog.cars}
-                  clearFiltersHref={catalog.clearHref}
-                  renderAction={renderAction}
-                />
+                <CarList cars={catalog.cars} clearFiltersHref={catalog.clearHref} />
               </CatalogPending>
             </div>
             <CatalogPagination pageCount={catalog.pageCount} />
           </div>
         </div>
       </CatalogNavigation>
-      {comparison}
+      <ComparisonBar cars={carApi.listCars()} />
       {catalog.jsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: catalog.jsonLd }} />
       ) : null}

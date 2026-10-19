@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import Image from "next/image";
 
 import { useComparisonSelection } from "@/features/comparison/provider/comparison-selection";
@@ -8,10 +7,11 @@ import { useComparisonSelection } from "@/features/comparison/provider/compariso
 import { type Car, CAR_TYPE_LABELS } from "../model/car";
 import { formatPrice, formatRating, formatWeight } from "../model/format-car";
 
+import { AddToCompare } from "./add-to-compare";
+
 type CarCardProps = {
   car: Car;
   priority?: boolean;
-  children?: ReactNode;
 };
 
 function cardClassName(selected: boolean): string {
@@ -20,7 +20,7 @@ function cardClassName(selected: boolean): string {
   return `flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ${border}`;
 }
 
-export function CarCard({ car, priority = false, children }: CarCardProps) {
+export function CarCard({ car, priority = false }: CarCardProps) {
   const selected = useComparisonSelection().ids.includes(car.id);
   const imageProps = priority ? { priority: true as const } : { loading: "lazy" as const };
 
@@ -55,7 +55,9 @@ export function CarCard({ car, priority = false, children }: CarCardProps) {
           <span className="text-slate-400"> · </span>
           {formatWeight(car.weightKg)}
         </p>
-        <div className="mt-auto pt-1">{children}</div>
+        <div className="mt-auto pt-1">
+          <AddToCompare carId={car.id} carName={`${car.brand} ${car.model}`} />
+        </div>
       </div>
     </article>
   );

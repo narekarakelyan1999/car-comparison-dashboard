@@ -4,12 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ComparisonSelectionProvider } from "@/features/comparison";
 
 import { CatalogPage } from "../catalog-page";
+import type { Car } from "../model/car";
 import { emptyCatalogFilters } from "../model/parse-catalog-query";
 import { CatalogNavigation } from "../provider/catalog-navigation";
+import { AddToCompare } from "../ui/add-to-compare";
 import { CarFilters } from "../ui/car-filters";
 import { CarList } from "../ui/car-list";
 import { CarSort } from "../ui/car-sort";
 import { CatalogPagination } from "../ui/catalog-pagination";
+import { ComparisonBar } from "../ui/comparison-bar";
 
 const replace = vi.hoisted(() => vi.fn());
 
@@ -112,7 +115,7 @@ describe("catalog screens", () => {
   it("shows an empty catalog and a filled page of results", () => {
     const { rerender } = render(
       <ComparisonSelectionProvider>
-        <CarList cars={[]} clearFiltersHref="/" renderAction={() => null} />
+        <CarList cars={[]} clearFiltersHref="/" />
       </ComparisonSelectionProvider>,
     );
 
@@ -145,14 +148,13 @@ describe("catalog screens", () => {
             },
           ]}
           clearFiltersHref="/"
-          renderAction={() => <button type="button">Add to compare</button>}
         />
       </ComparisonSelectionProvider>,
     );
 
     expect(screen.getByRole("heading", { name: "Toyota Camry" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Toyota Camry" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add to compare" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Toyota Camry to compare" })).toBeInTheDocument();
   });
 
   it("disables the page controls at each end and hides them on a single page", () => {
@@ -188,22 +190,111 @@ describe("catalog screens", () => {
   it("renders the catalog and redirects an invalid page", () => {
     render(
       <ComparisonSelectionProvider>
-        <CatalogPage
-          searchParams={{}}
-          comparison={<p>No cars selected</p>}
-          renderAction={() => <button type="button">Add to compare</button>}
-        />
+        <CatalogPage searchParams={{}} />
       </ComparisonSelectionProvider>,
     );
 
     expect(screen.getByText("Showing 1–12 of 32 cars")).toBeInTheDocument();
     expect(document.querySelector("script[type='application/ld+json']")).not.toBeNull();
-    expect(screen.getAllByRole("button", { name: "Add to compare" })).toHaveLength(12);
+    expect(screen.getAllByRole("button", { name: /Add .+ to compare/ })).toHaveLength(12);
 
-    expect(() =>
-      render(
-        <CatalogPage searchParams={{ page: "99" }} comparison={null} renderAction={() => null} />,
-      ),
-    ).toThrow("REDIRECT /?page=3");
+    expect(() => render(<CatalogPage searchParams={{ page: "99" }} />)).toThrow(
+      "REDIRECT /?page=3",
+    );
+  });
+
+  it("adds a catalog car and does nothing when the selection is already full", () => {
+    const { rerender } = render(
+      <ComparisonSelectionProvider initialIds={["toyota-camry"]}>
+        <AddToCompare carId="honda-accord" carName="Honda Accord" />
+      </ComparisonSelectionProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Add Honda Accord to compare" })).toHaveClass(
+      "focus-visible:outline-2",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Honda Accord to compare" }));
+    expect(screen.getByRole("button", { name: "Added Honda Accord" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    rerender(
+      <ComparisonSelectionProvider key="full" initialIds={["a", "b", "c"]}>
+        <AddToCompare carId="ford-mustang" carName="Ford Mustang" />
+      </ComparisonSelectionProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Add Ford Mustang to compare" })).toBeDisabled();
+  });
+
+  it("hides the bar until a car is selected and requires two cars to compare", () => {
+    const camry = sampleCar({ id: "toyota-camry", brand: "Toyota", model: "Camry" });
+    const accord = sampleCar({ id: "honda-accord", brand: "Honda", model: "Accord" });
+    const mustang = sampleCar({ id: "ford-mustang", brand: "Ford", model: "Mustang" });
+    const catalog = [camry, accord, mustang];
+    const { rerender } = render(
+      <ComparisonSelectionProvider key="empty" initialIds={[]}>
+        <ComparisonBar cars={catalog} />
+      </ComparisonSelectionProvider>,
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "Selected cars for comparison" }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <ComparisonSelectionProvider key="one" initialIds={[camry.id]}>
+        <ComparisonBar cars={catalog} />
+      </ComparisonSelectionProvider>,
+    );
+    expect(screen.getByText("1 car selected")).toBeInTheDocument();
+    expect(screen.getByText("Select at least 2 cars")).toBeInTheDocument();
+
+    rerender(
+      <ComparisonSelectionProvider key="two" initialIds={[camry.id, accord.id]}>
+        <ComparisonBar cars={catalog} />
+      </ComparisonSelectionProvider>,
+    );
+    expect(screen.getByRole("link", { name: "Compare" })).toHaveAttribute(
+      "href",
+      "/compare?ids=toyota-camry,honda-accord",
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Compare" }));
+    expect(
+      screen.getByRole("region", { name: "Selected cars for comparison" }),
+    ).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    rerender(
+      <ComparisonSelectionProvider key="three" initialIds={[camry.id, accord.id, mustang.id]}>
+        <ComparisonBar cars={catalog} />
+      </ComparisonSelectionProvider>,
+    );
+    expect(screen.getByText("You can compare up to 3 cars.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Toyota Camry" }));
+    expect(screen.queryByRole("button", { name: "Remove Toyota Camry" })).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 });
+
+function sampleCar(overrides: Partial<Car>): Car {
+  return {
+    id: "car",
+    brand: "Toyota",
+    model: "Camry",
+    year: 2024,
+    type: "sedan",
+    price: 28400,
+    weightKg: 1580,
+    rating: 4.6,
+    reviewCount: 10,
+    horsepower: 203,
+    fuelType: "gasoline",
+    transmission: "automatic",
+    drivetrain: "fwd",
+    seats: 5,
+    imageSrc: "/cars/car.png",
+    imageAlt: "Example",
+    ...overrides,
+  };
+}

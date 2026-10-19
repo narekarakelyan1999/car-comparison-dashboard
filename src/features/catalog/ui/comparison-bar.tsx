@@ -2,12 +2,17 @@
 
 import { ButtonLink } from "@/shared/ui";
 
-import { type Car, formatCarCount } from "@/features/catalog";
+import {
+  compareHref,
+  MAX_COMPARISON_CARS,
+  MIN_COMPARISON_CARS,
+} from "@/features/comparison/model/selection";
+import { useComparisonSelection } from "@/features/comparison/provider/comparison-selection";
 
-import { compareHref, MAX_COMPARISON_CARS, MIN_COMPARISON_CARS } from "../model/selection";
-import { useComparisonSelection } from "../provider/comparison-selection";
+import type { Car } from "../model/car";
+import { formatCarCount } from "../model/format-car";
 
-import { CompareToggle } from "./compare-toggle";
+import { SelectedCarChip } from "./selected-car-chip";
 
 type ComparisonBarProps = {
   cars: readonly Car[];
@@ -75,11 +80,7 @@ export function ComparisonBar({ cars }: ComparisonBarProps) {
           <ul className="flex list-none flex-wrap gap-2">
             {selected.map((car) => (
               <li key={car.id}>
-                <CompareToggle
-                  carId={car.id}
-                  carName={`${car.brand} ${car.model}`}
-                  appearance="chip"
-                />
+                <SelectedCarChip carId={car.id} carName={`${car.brand} ${car.model}`} />
               </li>
             ))}
           </ul>

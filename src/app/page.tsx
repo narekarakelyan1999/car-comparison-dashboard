@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { carApi, catalogApi, CatalogPage, type SearchParamRecord } from "@/features/catalog";
-import { CompareToggle, ComparisonBar } from "@/features/comparison";
+import { catalogApi, CatalogPage, type SearchParamRecord } from "@/features/catalog";
 
 import { siteConfig, socialMetadata } from "@/config/site";
 
@@ -35,13 +34,5 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
 async function HomeCatalog({ searchParams }: { searchParams: Promise<SearchParamRecord> }) {
   const params = await searchParams;
 
-  return (
-    <CatalogPage
-      searchParams={params}
-      comparison={<ComparisonBar cars={carApi.listCars()} />}
-      renderAction={(car) => (
-        <CompareToggle appearance="add" carId={car.id} carName={`${car.brand} ${car.model}`} />
-      )}
-    />
-  );
+  return <CatalogPage searchParams={params} />;
 }

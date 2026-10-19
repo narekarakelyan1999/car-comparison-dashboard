@@ -2,13 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Car } from "@/features/catalog";
+import { ComparisonBar } from "@/features/catalog/ui/comparison-bar";
 
 import { absoluteUrl, siteConfig } from "@/config/site";
 
 import { comparisonMetadata, ComparisonPage } from "../comparison-page";
 import { ComparisonSelectionProvider } from "../provider/comparison-selection";
-import { CompareToggle } from "../ui/compare-toggle";
-import { ComparisonBar } from "../ui/comparison-bar";
 
 const replace = vi.hoisted(() => vi.fn());
 
@@ -44,58 +43,10 @@ function sampleCar(overrides: Partial<Car>): Car {
 
 const camry = sampleCar({ id: "toyota-camry", brand: "Toyota", model: "Camry" });
 const accord = sampleCar({ id: "honda-accord", brand: "Honda", model: "Accord" });
-const mustang = sampleCar({ id: "ford-mustang", brand: "Ford", model: "Mustang" });
 
 describe("comparison screens", () => {
   beforeEach(() => {
     replace.mockReset();
-  });
-
-  it("hides the bar until a car is selected and requires two cars to compare", () => {
-    const catalog = [camry, accord, mustang];
-    const { rerender } = render(
-      <ComparisonSelectionProvider key="empty" initialIds={[]}>
-        <ComparisonBar cars={catalog} />
-      </ComparisonSelectionProvider>,
-    );
-
-    expect(
-      screen.queryByRole("region", { name: "Selected cars for comparison" }),
-    ).not.toBeInTheDocument();
-
-    rerender(
-      <ComparisonSelectionProvider key="one" initialIds={[camry.id]}>
-        <ComparisonBar cars={catalog} />
-      </ComparisonSelectionProvider>,
-    );
-    expect(screen.getByText("1 car selected")).toBeInTheDocument();
-    expect(screen.getByText("Select at least 2 cars")).toBeInTheDocument();
-
-    rerender(
-      <ComparisonSelectionProvider key="two" initialIds={[camry.id, accord.id]}>
-        <ComparisonBar cars={catalog} />
-      </ComparisonSelectionProvider>,
-    );
-    expect(screen.getByRole("link", { name: "Compare" })).toHaveAttribute(
-      "href",
-      "/compare?ids=toyota-camry,honda-accord",
-    );
-    fireEvent.click(screen.getByRole("link", { name: "Compare" }));
-    expect(
-      screen.getByRole("region", { name: "Selected cars for comparison" }),
-    ).toBeInTheDocument();
-    expect(replace).not.toHaveBeenCalled();
-
-    rerender(
-      <ComparisonSelectionProvider key="three" initialIds={[camry.id, accord.id, mustang.id]}>
-        <ComparisonBar cars={catalog} />
-      </ComparisonSelectionProvider>,
-    );
-    expect(screen.getByText("You can compare up to 3 cars.")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("checkbox", { name: "Remove Toyota Camry" }));
-    expect(screen.queryByRole("checkbox", { name: "Remove Toyota Camry" })).not.toBeInTheDocument();
-    expect(replace).not.toHaveBeenCalled();
   });
 
   it("clears the catalog selection when the comparison page opens", () => {
@@ -148,29 +99,6 @@ describe("comparison screens", () => {
       screen.queryByRole("button", { name: /Add a vehicle in column/ }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("2024 Ford Mustang")).toBeInTheDocument();
-  });
-
-  it("adds a catalog car and does nothing when the selection is already full", () => {
-    const { rerender } = render(
-      <ComparisonSelectionProvider initialIds={["toyota-camry"]}>
-        <CompareToggle appearance="add" carId="honda-accord" carName="Honda Accord" />
-      </ComparisonSelectionProvider>,
-    );
-
-    expect(
-      screen.getByRole("checkbox", { name: "Add Honda Accord to compare" }).closest("label"),
-    ).toHaveClass("has-[:focus-visible]:outline-2");
-    fireEvent.click(screen.getByRole("checkbox", { name: "Add Honda Accord to compare" }));
-    expect(screen.getByRole("checkbox", { name: "Added Honda Accord" })).toBeChecked();
-    expect(replace).not.toHaveBeenCalled();
-
-    rerender(
-      <ComparisonSelectionProvider key="full" initialIds={["a", "b", "c"]}>
-        <CompareToggle appearance="add" carId="ford-mustang" carName="Ford Mustang" />
-      </ComparisonSelectionProvider>,
-    );
-
-    expect(screen.getByRole("checkbox", { name: "Add Ford Mustang to compare" })).toBeDisabled();
   });
 
   it("shows an empty comparison, a removed id, and a real pair", () => {
