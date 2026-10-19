@@ -7,8 +7,7 @@ import { Button, Checkbox, TextField } from "@/shared/ui";
 import { CAR_TYPE_LABELS, type CarType } from "../model/car";
 import { activeFilterCount, type CatalogFilters, toggleFilterValue } from "../model/filter-cars";
 import { catalogFiltersFromDraft, emptyCatalogFilters } from "../model/parse-catalog-query";
-
-import { useCatalogNavigation } from "./catalog-navigation";
+import { useCatalogNavigation } from "../provider/catalog-navigation";
 
 type CarFiltersProps = {
   brands: readonly string[];

@@ -8,8 +8,7 @@ import { Button, Dialog, Select } from "@/shared/ui";
 import type { Car } from "@/features/catalog";
 
 import { COMPARE_PAGE_PARAM, nextSelectionHref } from "../model/selection";
-
-import { useComparisonNavigation } from "./comparison-navigation";
+import { useComparisonNavigation } from "../provider/comparison-navigation";
 
 type ComparisonCarOption = {
   id: string;

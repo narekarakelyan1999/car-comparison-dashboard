@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
-import { useComparisonSelection } from "@/features/comparison/ui/comparison-selection";
+import { useComparisonSelection } from "@/features/comparison/provider/comparison-selection";
 
 import { type Car, CAR_TYPE_LABELS } from "../model/car";
 import { formatPrice, formatRating, formatWeight } from "../model/format-car";

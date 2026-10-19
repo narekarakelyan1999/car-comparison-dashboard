@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { catalogApi } from "./api/catalog-api";
 import type { Car } from "./model/car";
 import type { SearchParamRecord } from "./model/parse-catalog-query";
-import { CatalogClearLink, CatalogNavigation, CatalogPending } from "./ui/catalog-navigation";
+import { CatalogClearLink, CatalogNavigation, CatalogPending } from "./provider/catalog-navigation";
 import { CarFilters, CarList, CarSort, CatalogPagination } from "./ui";
 
 type CatalogPageProps = {

@@ -5,10 +5,10 @@ import { ComparisonSelectionProvider } from "@/features/comparison";
 
 import { CatalogPage } from "../catalog-page";
 import { emptyCatalogFilters } from "../model/parse-catalog-query";
+import { CatalogNavigation } from "../provider/catalog-navigation";
 import { CarFilters } from "../ui/car-filters";
 import { CarList } from "../ui/car-list";
 import { CarSort } from "../ui/car-sort";
-import { CatalogNavigation } from "../ui/catalog-navigation";
 import { CatalogPagination } from "../ui/catalog-pagination";
 
 const replace = vi.hoisted(() => vi.fn());

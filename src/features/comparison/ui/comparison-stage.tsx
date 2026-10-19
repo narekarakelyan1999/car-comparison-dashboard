@@ -7,10 +7,10 @@ import type { Car } from "@/features/catalog";
 
 import { comparisonTitle } from "../model/format-comparison";
 import { COMPARE_PAGE_PARAM, replaceSelectionQuery } from "../model/selection";
+import { ComparisonPending, useComparisonNavigation } from "../provider/comparison-navigation";
+import { useComparisonSelection } from "../provider/comparison-selection";
 
 import { ComparisonAddDialog } from "./comparison-add-dialog";
-import { ComparisonPending, useComparisonNavigation } from "./comparison-navigation";
-import { useComparisonSelection } from "./comparison-selection";
 import { ComparisonTable } from "./comparison-table";
 
 type ComparisonStageProps = {

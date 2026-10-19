@@ -1,8 +1,7 @@
 "use client";
 
 import { isSelectionDisabled } from "../model/selection";
-
-import { useComparisonSelection } from "./comparison-selection";
+import { useComparisonSelection } from "../provider/comparison-selection";
 
 type CompareAppearance = "add" | "chip";
 

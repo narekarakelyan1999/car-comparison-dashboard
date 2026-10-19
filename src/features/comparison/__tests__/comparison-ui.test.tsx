@@ -6,9 +6,9 @@ import type { Car } from "@/features/catalog";
 import { absoluteUrl, siteConfig } from "@/config/site";
 
 import { comparisonMetadata, ComparisonPage } from "../comparison-page";
+import { ComparisonSelectionProvider } from "../provider/comparison-selection";
 import { CompareToggle } from "../ui/compare-toggle";
 import { ComparisonBar } from "../ui/comparison-bar";
-import { ComparisonSelectionProvider } from "../ui/comparison-selection";
 
 const replace = vi.hoisted(() => vi.fn());
 

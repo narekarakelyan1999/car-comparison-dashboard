@@ -8,7 +8,7 @@ import { siteConfig, socialMetadata } from "@/config/site";
 import { comparisonApi } from "./api/comparison-api";
 import { comparisonTitle } from "./model/format-comparison";
 import { comparisonCanonicalPath, MIN_COMPARISON_CARS } from "./model/selection";
-import { ComparisonNavigation } from "./ui/comparison-navigation";
+import { ComparisonNavigation } from "./provider/comparison-navigation";
 import { ComparisonStage } from "./ui/comparison-stage";
 
 type ComparisonPageProps = {

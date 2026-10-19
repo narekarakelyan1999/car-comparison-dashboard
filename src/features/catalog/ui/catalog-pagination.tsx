@@ -5,8 +5,7 @@ import type { MouseEvent } from "react";
 import { Button, buttonClassName } from "@/shared/ui";
 
 import { catalogQueryHref } from "../model/parse-catalog-query";
-
-import { useCatalogNavigation } from "./catalog-navigation";
+import { useCatalogNavigation } from "../provider/catalog-navigation";
 
 type CatalogPaginationProps = {
   pageCount: number;

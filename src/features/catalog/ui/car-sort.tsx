@@ -3,8 +3,7 @@
 import { Select } from "@/shared/ui";
 
 import { CAR_SORT_OPTIONS, isCarSortId } from "../model/sort-cars";
-
-import { useCatalogNavigation } from "./catalog-navigation";
+import { useCatalogNavigation } from "../provider/catalog-navigation";
 
 export function CarSort() {
   const { filters, replaceFilters } = useCatalogNavigation();

@@ -5,9 +5,9 @@ import { ButtonLink } from "@/shared/ui";
 import { type Car, formatCarCount } from "@/features/catalog";
 
 import { compareHref, MAX_COMPARISON_CARS, MIN_COMPARISON_CARS } from "../model/selection";
+import { useComparisonSelection } from "../provider/comparison-selection";
 
 import { CompareToggle } from "./compare-toggle";
-import { useComparisonSelection } from "./comparison-selection";
 
 type ComparisonBarProps = {
   cars: readonly Car[];
